@@ -4,20 +4,24 @@ Issues and PRDs for this repo live as Multica issues. Use the `multica` CLI for 
 
 ## Conventions
 
-- **Authenticate**: `multica login`. Check with `multica auth status`.
+- **Authenticate**: check with `multica auth status` first. If it reports an invalid, expired, or missing token, stop and ask the user to run `multica login`; do not run `multica login` automatically because it creates a new token.
 - **Select workspace**: `multica workspace switch <id-or-slug>`. For one-off commands, pass `--workspace-id <id>`.
-- **Create an issue**: `multica issue create --title "..." --description "..."`. Use a heredoc for multi-line descriptions.
-- **Read an issue**: `multica issue get <id> --output json`, then fetch comments with `multica issue comment list <id>`.
-- **List issues**: `multica issue list --output json` with appropriate `--metadata triage_role=<role>` filters.
-- **Comment on an issue**: `multica issue comment add <id> --content "..."`
-- **Apply / change triage role**: `multica issue metadata set <id> --key triage_role --value "<role>"`
-- **Close**: `multica issue status <id> cancelled`. For won't-fix, post the explanation first with `multica issue comment add <id> --content "..."`, set `triage_role` to `wontfix`, then close.
+- **Find the project**: Multica has a default workspace, but no current project. Run `multica project list --output json`, then `multica project resource list <project-id> --output json`, and match a `github_repo` resource against `git remote -v`. Normalize common GitHub forms like `git@github.com:OWNER/REPO.git` and `https://github.com/OWNER/REPO.git`.
+- **Create an issue**: `multica issue create --title "..." --description "..." --project <project-id> --output json`. Omit `--project` only when no Multica project matches this repo. Use `--description-file <path>` or `--description-stdin` for multi-line descriptions.
+- **Read an issue**: `multica issue get <id> --output json`, then fetch comments with `multica issue comment list <id> --output json`.
+- **List issues**: `multica issue list --project <project-id> --metadata triage_role=<role> --status <status> --output json`. Omit any filter that is not relevant.
+- **Comment on an issue**: `multica issue comment add <id> --content "..." --output json`. Use `--content-file <path>` or `--content-stdin` for multi-line comments.
+- **Apply / remove labels**: find or create the label with `multica label list --output json` / `multica label create --name "<label>" --color "#3b82f6" --output json`, then run `multica issue label add <issue-id> <label-id> --output json` or `multica issue label remove <issue-id> <label-id> --output json`. Label names must be 32 characters or fewer.
+- **Apply / change triage role**: `multica issue metadata set <id> --key triage_role --value "<role>" --type string --output json`, and mirror the same value as a Multica label. When changing roles, remove the previous triage label from the issue.
+- **Close**: `multica issue status <id> cancelled --output json`. For won't-fix, post the explanation first with `multica issue comment add <id> --content "..." --output json`, set `triage_role` to `wontfix`, then close.
 
-Multica does not use GitHub/GitLab-style labels for this workflow. When a skill says "apply a label" or refers to `docs/agents/triage-labels.md`, treat the mapped value as the Multica metadata value for `triage_role`.
+Do not run multiple mutating commands against the same issue in parallel. Commands like `issue update`, `issue status`, `issue metadata set/delete`, and `issue label add/remove` should be serialized.
 
-`docs/agents/triage-labels.md` may still call these values labels because the upstream skills are tracker-agnostic. In a Multica repo, read that file as a role mapping table, not as instructions to create labels.
+## Triage Roles
 
-Use these canonical metadata values unless `docs/agents/triage-labels.md` explicitly maps them to different strings:
+When a skill says "apply a label" or refers to `docs/agents/triage-labels.md`, treat the mapped value as both the Multica metadata value for `triage_role` and the Multica issue label name to create/apply.
+
+Use these canonical values unless `docs/agents/triage-labels.md` maps them differently:
 
 - `needs-triage`
 - `needs-info`
@@ -25,7 +29,7 @@ Use these canonical metadata values unless `docs/agents/triage-labels.md` explic
 - `ready-for-human`
 - `wontfix`
 
-Do not create Multica labels to mirror these roles. If a role cannot be represented with metadata, stop and ask the user how to map it.
+Use `triage_role` metadata as the filtering source of truth because `multica issue list` supports `--metadata triage_role=<role>` and does not expose a label filter.
 
 For board visibility only, you may also mirror triage roles into coarse Multica statuses:
 
@@ -35,7 +39,7 @@ For board visibility only, you may also mirror triage roles into coarse Multica 
 - `ready-for-human` -> `todo`
 - `wontfix` -> `cancelled`
 
-Do not treat Multica status as the source of truth for triage. Agents may also move issues through execution statuses like `in_progress` and `done`.
+Do not treat Multica status as the source of truth for triage. Agents may also move issues through execution statuses like `in_progress`, `in_review`, and `done`.
 
 ## When a skill says "publish to the issue tracker"
 
@@ -43,4 +47,4 @@ Create a Multica issue.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `multica issue get <id> --output json` and `multica issue comment list <id>`.
+Run `multica issue get <id> --output json` and `multica issue comment list <id> --output json`.
