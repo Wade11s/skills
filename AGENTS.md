@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository stores personal Codex skills. Keep each skill in its own directory under `skills/`, using the skill name as the directory name, for example `skills/setup-multica-issue-tracker/`.
+This repository stores personal Agents Skills. Keep each skill in its own directory under `skills/`, using the skill name as the directory name, for example `skills/setup-multica-issue-tracker/`.
 
 Each skill should include a `SKILL.md` file with YAML front matter and concise operational instructions. Supporting templates or references should live beside the skill that uses them, as with `skills/setup-multica-issue-tracker/issue-tracker-multica.md`. The root `README.md` lists install instructions and a short index of available skills.
 

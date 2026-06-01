@@ -1,6 +1,6 @@
-# Wade's Skills
+# Wade's Agents Skills
 
-Personal Codex skills for research and development.
+Personal Agents Skills for research and development.
 
 Install with:
 
