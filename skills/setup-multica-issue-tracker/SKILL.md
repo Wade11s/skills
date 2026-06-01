@@ -7,7 +7,7 @@ description: Configure the current repo to use Multica as the project issue trac
 
 Configure this repo to use Multica as the issue tracker consumed by `to-prd`, `to-issues`, and `triage`.
 
-This is an overlay for `setup-matt-pocock-skills`. Only manage Multica issue tracker configuration:
+This is an overlay for `setup-matt-pocock-skills`, not a replacement for it. Only manage Multica issue tracker configuration:
 
 - Write `docs/agents/issue-tracker.md`
 - Optionally update the Issue tracker summary in `CLAUDE.md` or `AGENTS.md`
@@ -28,6 +28,8 @@ Read the current repo state:
 
 If `docs/agents/triage-labels.md` or `docs/agents/domain.md` is missing, tell the user that `/setup-matt-pocock-skills` should normally be run first. Continue if they only want the Multica issue tracker file.
 
+For Multica repos, `docs/agents/triage-labels.md` is still useful even though Multica does not use labels here. Treat its right-hand column as the metadata value to write into `triage_role`, not as a label name to create.
+
 ### 2. Confirm Workspace
 
 Ask for the Multica workspace id or slug unless it is already clear from the conversation.
@@ -43,14 +45,9 @@ Default to `multica workspace switch <id-or-slug>` when the user has no preferen
 
 Create `docs/agents/` if needed.
 
-Write `docs/agents/issue-tracker.md` from `issue-tracker-multica.md`, customized with the workspace choice.
+Write `docs/agents/issue-tracker.md` from `issue-tracker-multica.md`, customized with the workspace choice if needed.
 
-Use Multica metadata as the source of truth for triage roles:
-
-- key: `triage_role`
-- values: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`
-
-Multica status may be mirrored for board visibility, but it is not authoritative because agents may also move issues through execution statuses like `in_progress` and `done`.
+Do not try to translate Matt Pocock's triage roles into Multica labels. Multica does not have the same label model as GitHub/GitLab in this workflow. The canonical triage role lives in Multica metadata under `triage_role`; `docs/agents/triage-labels.md` only supplies the allowed metadata values.
 
 ### 4. Update Agent Config
 
