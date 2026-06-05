@@ -1,0 +1,14 @@
+# Nested git repos (skills copied from external repos)
+**/.git/
+
+# OS / editor temp files
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Node / Bun artifacts if added later
+node_modules/
+dist/
