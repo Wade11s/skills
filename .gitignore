@@ -12,3 +12,7 @@
 # Node / Bun artifacts if added later
 node_modules/
 dist/
+
+# Python cache from skill scripts
+**/__pycache__/
+*.py[cod]

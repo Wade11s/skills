@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-01
+
+- [Add]: `skills/skill-doctor/` + Grade installed skills from local conversation history. Forked from Warp's skill-doctor in [common-skills](https://github.com/warpdotdev/common-skills) and adapted for Pi agent.
+- [Move]: `skills/setup-multica-issue-tracker/` -> `deprecated/setup-multica-issue-tracker/` + retire the Multica issue tracker skill from the active skills list.
+
 ## 2026-06-05
 
 - [Update]: `AGENTS.md` + rewrite contributor guide following `codex-init` skill template (tighter structure, conciser wording, consistent examples).

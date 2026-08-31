@@ -10,6 +10,10 @@ bunx skills add Wade11s/skills
 
 ## Skills
 
-- `setup-multica-issue-tracker` - Configure `docs/agents/issue-tracker.md` so Matt Pocock engineering skills use Multica while the upstream skills stay updateable.
 - `beautiful-mermaid` - Render Mermaid diagrams as beautiful SVG or terminal-friendly ASCII art using the beautiful-mermaid library.
 - `architecture-diagram-generator` - Create polished dark-themed architecture diagrams as self-contained HTML+SVG files. (Adapted from [Cocoon AI](https://github.com/Cocoon-AI/architecture-diagram-generator) under MIT License)
+- `skill-doctor` - Grade installed skills from local Pi (and Claude Code / Codex / Warp) conversation history, then draft skill edits and a local HTML report. (Forked from [Warp skill-doctor](https://github.com/warpdotdev/common-skills/tree/main/.agents/skills/skill-doctor), adapted for Pi agent)
+
+## Deprecated
+
+- `deprecated/setup-multica-issue-tracker` - Configure `docs/agents/issue-tracker.md` so Matt Pocock engineering skills use Multica while the upstream skills stay updateable.

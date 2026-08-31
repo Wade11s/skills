@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository stores personal agent skills. Each skill lives in its own directory under `skills/`, named after the skill in kebab-case (e.g., `skills/setup-multica-issue-tracker/`).
+This repository stores personal agent skills. Each skill lives in its own directory under `skills/`, named after the skill in kebab-case (e.g., `skills/beautiful-mermaid/`). Retired skills live under `deprecated/`.
 
 Every skill must contain a `SKILL.md` file with YAML front matter and concise operational instructions. Supporting templates or references should reside beside the skill that uses them. The root `README.md` lists installation instructions and a short index of available skills.
 
