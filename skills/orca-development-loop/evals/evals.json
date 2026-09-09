@@ -1,0 +1,339 @@
+{
+  "skill_name": "orca-development-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a new product idea: let users save and restore named layouts. The behavior is still fuzzy. Help me shape it and create the right Linear work.",
+      "expected_output": "Stops at an Alignment Profile Gate, proposes one exact harness/model/reasoning combination, waits for confirmation, and only then creates the Task and terminal. After a verified launch it hands the conversation to the Alignment terminal.",
+      "files": [],
+      "expectations": [
+        "Proposes exactly one Alignment harness/model/reasoning tuple",
+        "Waits for explicit user confirmation before any task-create or terminal creation",
+        "Creates the Alignment Task before launching the terminal",
+        "Inlines the complete initial request in the Task instead of asking the user to repeat it",
+        "Tells the user to switch to the named Alignment terminal"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The mute button is visibly on but audio still plays. Repro and expected behavior are already precise; make this ready for an agent.",
+      "expected_output": "Uses the adaptive bounded-bug path: focused clarification plus /to-tickets without forcing /to-spec, then verifies the resulting Linear tickets by readback.",
+      "files": [],
+      "expectations": [
+        "Does not require /to-spec for this single bounded bug",
+        "Recommends /to-tickets as the next user-invoked step",
+        "Verifies the final ticket state by reading Linear back rather than trusting prose"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Start implementing ITEM-101 and ITEM-102 with Orca. Pick whatever models you think are best and get going.",
+      "expected_output": "Stops at the Execution Profile Gate, proposes role-specific profiles plus the parallel limit and validation commands, and waits for confirmation before generating a handoff or launching a Coordinator.",
+      "files": [],
+      "expectations": [
+        "Proposes profiles for Coordinator, Worker, Reviewer, Integration Worker, and Integration Reviewer",
+        "Worker and Reviewer come from different model families",
+        "Proposes a cheaper model for the orchestration-only Coordinator than for the Worker",
+        "Checks provider headroom once and skips a provider whose window is in deficit",
+        "Resolves fast-tier and full-suite commands and records their source",
+        "Waits for explicit confirmation before generating the handoff",
+        "Freezes confirmed values in a Wave Manifest saved beside the handoff"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The ITEM-101 reviewer requested changes. Keep the existing agents' context and have the original worker fix it, then let the same reviewer check the delta.",
+      "expected_output": "Retains and re-dispatches both terminals in the same Issue Worktree with fresh lifecycle envelopes but delta-only Task bodies.",
+      "files": [],
+      "expectations": [
+        "Re-dispatches the original Worker terminal, then the original Reviewer terminal",
+        "Sends a fresh lifecycle envelope with new Task/Dispatch IDs",
+        "Delta Task carries changed commits, active findings, acceptance changes, and invalidations only",
+        "Does not repeat or reload stable role, profile, Orca, or project-doc context",
+        "Keeps review outcome separate from verdict and releases neither terminal"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "PROJECT-102 was accepted, but merging it into master conflicts with changes from another accepted ticket. Finish integration safely.",
+      "expected_output": "Runs a non-mutating preflight, and because content conflicts exist creates a dedicated Integration Worktree with an Integration Worker and fresh Integration Reviewer before advancing main.",
+      "files": [],
+      "expectations": [
+        "Runs a non-mutating merge preflight before creating any worktree",
+        "Creates a dedicated Integration Worktree only because conflicts exist",
+        "Assigns resolving-merge-conflicts to the Integration Worker",
+        "Requires a fresh Integration Reviewer verdict before main advances",
+        "Confirms main has not advanced immediately before advancing it"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "You are the newly launched Alignment Agent. Main already handed you complete feedback about auto-hiding a top toolbar plus several settings-panel behavior changes. Begin the alignment session.",
+      "expected_output": "Runs the runtime profile probe first, then makes a first human-facing response with the attestation, a feedback summary, and exactly one recommended slash command.",
+      "files": [],
+      "expectations": [
+        "First action is the harness-native profile probe",
+        "First visible response shows the exact profile attestation",
+        "Summarizes the received feedback points",
+        "Recommends exactly one next slash skill with its exact command",
+        "Does no broad repository or Linear exploration before that response"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Before launching Alignment, find a good harness/model/thinking combination and confirm it with me. Keep the discovery cheap.",
+      "expected_output": "Queries the current profile once, validates only the proposed candidate, proposes a single tuple, and stops for confirmation.",
+      "files": [],
+      "expectations": [
+        "Reads the current PI_PROVIDER/PI_MODEL/PI_REASONING_LEVEL in one call",
+        "Validates only the one proposed candidate",
+        "Does not enumerate all models, accounts, agents, or quotas",
+        "Creates no Task and no terminal"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The Alignment Agent sent a complete verified ticket manifest. Main considers alignment finished. Clean up the Alignment Agent.",
+      "expected_output": "Processes the Delivery, releases the settled Alignment terminal immediately, acknowledges once, and retains nothing for reuse.",
+      "files": [],
+      "expectations": [
+        "Calls worker-release before acknowledging the Delivery",
+        "Acknowledges the whole Delivery exactly once",
+        "Does not retain or plan to re-dispatch the Alignment terminal",
+        "Does not ask for extra user approval to close it"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "You are the Coordinator. The ITEM-104 implementation Worker just reported a clean committed head and passing tests. Start code review.",
+      "expected_output": "Performs metadata-only checks, retains the Worker, and dispatches a fresh read-only Reviewer in the same Issue Worktree.",
+      "files": [],
+      "expectations": [
+        "Checks lifecycle IDs, commit existence, exact HEAD, clean status, and base ancestry",
+        "Does not run git diff, read changed files, load code-review, or rerun tests for a verdict",
+        "Retains the Worker terminal",
+        "Dispatches a fresh Reviewer with the confirmed Reviewer profile in the same worktree",
+        "Issues no ACCEPT of its own"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "ITEM-105 is accepted. Main has advanced since its base, but a non-mutating merge preflight shows no content conflicts. Integrate it without unnecessary workspace setup.",
+      "expected_output": "Reuses the existing Issue Worktree for the mechanical candidate, validates there, and fast-forwards main only after tree equivalence.",
+      "files": [],
+      "expectations": [
+        "Creates no dedicated Integration Worktree",
+        "Takes the worktree mutation lock before staging, confirming Dispatches are settled and terminals idle",
+        "Materializes the mechanical candidate with current main as first parent",
+        "Validates the combined state in the Issue Worktree",
+        "Advances main only after an unchanged main head and tree equivalence"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "You are the Coordinator and your profile matches the manifest. Create your Run and tell Main you are ready.",
+      "expected_output": "Creates the Run, then reports readiness through a real Orca message type carrying the coordinator_ready subject.",
+      "files": [],
+      "expectations": [
+        "Sends readiness with a valid --type value from Orca's enum",
+        "Carries coordinator_ready as the subject rather than as the type",
+        "Addresses the Main Run explicitly with --to run:<mainRun>",
+        "Includes the Coordinator Run ID and accepted manifest version"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "You are the Coordinator. Your 15-minute wait for ITEM-107's worker just timed out with no messages at all, and its last heartbeat was two cadences ago. Handle it.",
+      "expected_output": "Treats silence as a stall and climbs the ladder instead of waiting again or assuming completion.",
+      "files": [],
+      "expectations": [
+        "Inspects the Dispatch with worker-show and one bounded worker-read",
+        "Escalates to worker-stop, or worker-abandon when the process cannot be proven stopped",
+        "Relaunches with worker-start --retry-of carrying the full role Task and durable artifacts",
+        "Marks the ticket blocked and escalates to Main after two failed relaunches"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "You are the Coordinator. ITEM-108 has now had two focused re-reviews plus a clean-room review, and the fresh reviewer still returns REQUEST_CHANGES. What now?",
+      "expected_output": "Ends the fix loop, marks the ticket blocked, and escalates with both review artifacts rather than dispatching another fix.",
+      "files": [],
+      "expectations": [
+        "Dispatches no further fix pass",
+        "Reports the ticket outcome as blocked with a reason",
+        "Escalates to Main with both review artifacts and the surviving findings",
+        "Preserves commits, worktree, and review artifacts"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Deliver GH-42 and GH-43 through the Orca loop. This repo tracks work in GitHub Issues, as docs/agents/issue-tracker.md says.",
+      "expected_output": "Stops at the tracker check: the loop needs Linear through orca linear, so it reports the mismatch instead of running Linear operations or improvising a GitHub path.",
+      "files": [],
+      "expectations": [
+        "Detects that the configured tracker is not Linear through orca linear",
+        "Stops before creating a handoff, Coordinator, or worktree",
+        "Explains the Alignment-to-Execution mismatch to the user",
+        "Offers the Linear tracker seed template as the fix"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Kick off delivery for PROJECT-201. There is no docs/agents directory in this repo at all.",
+      "expected_output": "Names the missing tracker configuration, points at /setup-matt-pocock-skills, and resolves validation commands from the repository itself rather than assuming absent documents.",
+      "files": [],
+      "expectations": [
+        "Tells the user to run /setup-matt-pocock-skills for the missing tracker configuration",
+        "Does not treat a missing domain document as an error",
+        "Derives fast-tier and full-suite commands from repository scripts or asks once",
+        "Records the resolved commands and their source in the Wave Manifest"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Stop the ITEM-110 wave, I changed my mind about the approach.",
+      "expected_output": "Runs the abort path: stops live Dispatches, leaves main and Linear lifecycle untouched, preserves committed work, and reports where each ticket stopped.",
+      "files": [],
+      "expectations": [
+        "Sends the stop instruction to the Coordinator Run and waits for acknowledgement",
+        "Stops live Dispatches with worker-stop or worker-abandon",
+        "Leaves main unchanged and posts no Linear completion comment or labels",
+        "Reports each affected ticket as abandoned with the user-abort reason and the retained resources"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Just this one ticket, ITEM-111, it is a two-line fix. Skip the ceremony and do it yourself.",
+      "expected_output": "Keeps the single Coordinator path: Main still gates profiles and hands delivery off instead of implementing, reviewing, or integrating in the Main session.",
+      "files": [],
+      "expectations": [
+        "Main does not implement, review, or integrate the change itself",
+        "Runs the Execution Profile Gate for the single ticket",
+        "Hands delivery to a Coordinator with a Wave Manifest",
+        "Keeps inner Worker and Reviewer mail in the Coordinator Run"
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "For the ITEM-120 wave just use one model everywhere, whatever you are running right now. Simpler that way.",
+      "expected_output": "Explains that the Worker and Reviewer must differ in family and asks for a decision instead of silently accepting one model for both.",
+      "files": [],
+      "expectations": [
+        "Names the correlated-blind-spot reason for cross-family review",
+        "Proposes a different family for the Reviewer than the Worker",
+        "Proceeds with one family only after an explicit user decision recorded in the manifest",
+        "Still proposes a cheaper Coordinator profile rather than reusing the premium one everywhere"
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "You are the Coordinator for a five-ticket wave. The manifest gives two worker tuples and two reviewer tuples. Assign agents for the first three tickets.",
+      "expected_output": "Assigns a cross-family pair per ticket from the pools, balances by headroom and round-robin within maxConcurrent, pins each pair to its ticket, and records the assignment.",
+      "files": [],
+      "expectations": [
+        "Each ticket gets one worker entry and one reviewer entry of different families",
+        "Balances across pool entries instead of sending every ticket to one entry",
+        "Respects each entry's maxConcurrent limit",
+        "Pins the pair so fix passes and re-reviews reuse the same entries",
+        "Records the assigned entry ids per ticket for the wave report"
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "You are the Coordinator. ITEM-130's pinned worker tuple now fails to launch because that provider's window is exhausted. The manifest's worker pool has another confirmed tuple.",
+      "expected_output": "Fails over to the other confirmed pool entry, keeps the family constraint, and needs no new user confirmation; a substitute outside the pool would require one.",
+      "files": [],
+      "expectations": [
+        "Fails over to another entry inside the confirmed pool",
+        "Keeps the reviewer's family different from the substituted worker's family",
+        "Does not ask for new confirmation for an in-pool substitution",
+        "Records the substitution and the provider error",
+        "Reports profile_mismatch and waits if only an out-of-pool substitute would work"
+      ]
+    },
+    {
+      "id": 21,
+      "prompt": "Set up a delivery wave for ORCA-55 on this machine. There is no pi and no codexbar installed here, only Orca and a logged-in Codex account.",
+      "expected_output": "Degrades discovery to the sources that exist, asks the user for what none of them can answer, and records that headroom is unknown rather than assuming it is unlimited.",
+      "files": [],
+      "expectations": [
+        "Probes tool availability once instead of assuming pi or codexbar",
+        "Uses Orca-native sources such as orca account list for auth readiness",
+        "Takes a one-shot smoke flag from the harness's own --help instead of reaching for pi",
+        "Asks the user for model ids or families it cannot discover",
+        "Records headroom as unknown in the manifest instead of assuming headroom",
+        "Still enforces different Worker and Reviewer families"
+      ]
+    },
+    {
+      "id": 22,
+      "prompt": "You are the Alignment Agent. The layouts feature went through /grill-with-docs and /to-spec, and /to-tickets just published PROJECT-201 through PROJECT-204. Finish the alignment session.",
+      "expected_output": "Labels each executable ticket with a complexity tier from the project vocabulary, verifies the label strings exist in the team, and reports complexity per ticket in the completion payload.",
+      "files": [],
+      "expectations": [
+        "Reads the complexity vocabulary and repo anchors from docs/agents/agent-profiles.md",
+        "Verifies the three label strings exist with orca linear team labels before applying them",
+        "Labels executable tickets only, not the spec parent",
+        "Assigns each tier by what that ticket's own decision costs, not by diff size",
+        "Does not inflate tiers because the feature was grilled; settled decisions yield simple tickets",
+        "Treats a ticket that changes a contract other modules depend on as complex even when its diff is small",
+        "Reports complexity per ticket in the worker_done payload",
+        "Continues and names the missing vocabulary instead of blocking when a label does not exist"
+      ]
+    },
+    {
+      "id": 23,
+      "prompt": "Deliver PROJECT-201 and PROJECT-202. We already picked our usual models for this repo weeks ago.",
+      "expected_output": "Finds the stored profile file, revalidates it cheaply, and asks for a one-word confirmation instead of re-running discovery.",
+      "files": [],
+      "expectations": [
+        "Reads docs/agents/agent-profiles.md before any discovery command",
+        "Checks host match, age against maxAgeDays, and one bounded auth check per entry it will launch",
+        "Reads headroom fresh rather than trusting a stored value",
+        "Proposes the stored pools as a one-line summary and takes a one-word confirmation",
+        "Falls back to full discovery and offers to update the file when a check fails"
+      ]
+    },
+    {
+      "id": 24,
+      "prompt": "You are the Coordinator. ITEM-140 is labelled complex and ITEM-141 is simple. The worker pool has one premium entry trusted with standard and complex, and one cheap entry trusted with simple and standard.",
+      "expected_output": "Routes the complex ticket to the premium entry and the simple one to the cheap entry, keeping cross-family review for both.",
+      "files": [],
+      "expectations": [
+        "Sends the complex ticket to the entry whose tiers include complex",
+        "Does not consume the premium entry for the simple ticket",
+        "Keeps each ticket's reviewer family different from its worker family",
+        "Plans a full-suite rerun for the complex ticket's fix passes",
+        "Records both assignments with their complexity for the wave report"
+      ]
+    },
+    {
+      "id": 25,
+      "prompt": "I want to use my z.ai GLM models for the reviewer pool. pi auth check says that provider is not ready, but I use it every day and it works fine.",
+      "expected_output": "Does not drop the provider on the probe result: it smoke-tests the model with one real call, and either proposes it on that evidence or quotes the provider error and asks the user to decide.",
+      "files": [],
+      "expectations": [
+        "Does not discard the provider because the auth probe reported not ready",
+        "Runs one bounded non-interactive smoke call against the exact model",
+        "Judges the returned output rather than the exit status",
+        "Proposes the candidate when the smoke call answers, recording the smoke test as its evidence",
+        "Quotes the exact provider error and asks the user to decide when the call fails",
+        "Falls back to the user decision and a first-launch test when no CLI on the host can make a one-shot call",
+        "Records the user's vouch in the profile file so the question is not repeated every wave"
+      ]
+    },
+    {
+      "id": 26,
+      "prompt": "You are the Alignment Agent. Every one of the six tickets you just sliced from the notifications spec looks like it needs a structural decision. Finish the session.",
+      "expected_output": "Treats an all-design slice set as a signal about the alignment rather than labelling around it, and says so in the completion report.",
+      "files": [],
+      "expectations": [
+        "Notices that nearly every slice landed in standard or complex",
+        "Reads it as unresolved structure pushed downstream or slices that are too wide",
+        "Checks that no executable ticket still carries an open question, which would need the needs-info role instead",
+        "Reports the observation so the user can choose to keep aligning or accept the tiers",
+        "Does not silently downgrade tiers to make the distribution look better"
+      ]
+    }
+  ]
+}

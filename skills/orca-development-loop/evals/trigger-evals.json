@@ -1,0 +1,22 @@
+[
+  {"query": "ok so users keep asking for a way to save their window layouts and restore them later. i havent really thought it through, can you help me turn it into proper linear tickets", "should_trigger": true},
+  {"query": "the mute toggle shows as on but audio keeps playing. repro is solid. get this into linear so an agent can pick it up", "should_trigger": true},
+  {"query": "lets start delivery on ITEM-101 and ITEM-102 with orca, one worktree each, worker plus reviewer", "should_trigger": true},
+  {"query": "PROJECT-204 was accepted by the reviewer but it conflicts with master now. finish the integration properly", "should_trigger": true},
+  {"query": "the reviewer on ITEM-101 asked for changes. reuse the same worker and reviewer terminals for the fix and the re-review", "should_trigger": true},
+  {"query": "i want a coordinator to run the whole wave for the four tickets in the layouts project and report back when everything is merged", "should_trigger": true},
+  {"query": "here is a pile of product feedback from yesterday's call. shape it into a spec and executable tickets before we build anything", "should_trigger": true},
+  {"query": "ENG-77 through ENG-80 are ready-for-agent. spin up the delivery loop but confirm the models with me first", "should_trigger": true},
+  {"query": "wave for ITEM-110 seems stuck, no mail from the coordinator for half an hour. figure out where it is", "should_trigger": true},
+  {"query": "i changed my mind on the approach, stop the ITEM-110 wave and tell me where each ticket ended up", "should_trigger": true},
+  {"query": "review the diff on my current branch against main and tell me what you would change", "should_trigger": false},
+  {"query": "create a linear ticket titled 'bump vite to 6' with the ready-for-agent label, thats all i need", "should_trigger": false},
+  {"query": "hand this refactor off to another agent in a new worktree with codex high effort, i dont need to supervise it", "should_trigger": false},
+  {"query": "spawn one claude worker to convert the remaining jest tests to vitest and wait for it to report back", "should_trigger": false},
+  {"query": "my merge is conflicted in src/audio/mixer.ts, walk me through resolving it", "should_trigger": false},
+  {"query": "the settings panel state desyncs from the toolbar when you resize fast. debug it with me here", "should_trigger": false},
+  {"query": "whats the current state of ENG-88 and who is assigned to it", "should_trigger": false},
+  {"query": "set up this repo for the engineering skills, i think the issue tracker config is missing", "should_trigger": false},
+  {"query": "grill me on whether named layouts should be per-window or per-workspace before i write anything down", "should_trigger": false},
+  {"query": "open a new orca worktree off main called audio-fixes and start a terminal there", "should_trigger": false}
+]
