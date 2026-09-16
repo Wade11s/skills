@@ -23,11 +23,15 @@ Every wave ticket ends in exactly one state, and `wave_done` reports it:
 
 | State | Meaning | Required handling |
 |---|---|---|
-| `integrated` | reviewed, merged, Linear closed and read back | normal cleanup |
+| `integrated` | reviewed, merged, tracker completion applied and read back | normal cleanup |
 | `blocked` | cannot proceed without a decision or an unmet dependency | escalate to Main with evidence; preserve commits, branch, worktree, and review artifacts |
 | `abandoned` | the user stopped it, or repair attempts were exhausted | preserve the same artifacts and name the reason |
 
 Blocking propagates: a ticket whose blocker ends `blocked` or `abandoned` never launches. Mark it `blocked` with the same reason and report both rather than dispatching into a broken dependency.
+
+A missing complete-set attestation is missing launch evidence, not an empty
+blocker list. An unsatisfied blocker outside the wave also keeps the dependent
+ticket blocked; a user-provided delivery order cannot override either case.
 
 **Review that never converges.** After the manifest's `maxIncrementalReReviews` focused cycles, run one clean-room review with a fresh Reviewer and the full Task. If that pass also returns `REQUEST_CHANGES`, stop dispatching fixes: the ticket is `blocked`, and Main receives both review artifacts and the surviving finding list.
 
@@ -40,13 +44,13 @@ When the user asks to stop an active wave:
 1. Main sends the stop instruction to the Coordinator Run and waits for acknowledgement. This is the explicit-wait case for `check --wait`.
 2. The Coordinator stops live Dispatches with `worker-stop`, or `worker-abandon` where a process cannot be proven stopped, and leaves committed work in place.
 3. Main stays unchanged. An in-flight integration candidate is discarded rather than advanced.
-4. Linear keeps its current lifecycle state: unfinished tickets get no completion comment and no completion labels, only a report of where they stopped.
+4. The configured tracker keeps its current lifecycle state: unfinished tickets get no completion comment or classification write, only a report of where they stopped.
 5. The Coordinator sends `wave_done` with each affected ticket `abandoned`, the reason `user abort`, and the retained worktrees and terminals that would let the work resume.
 6. Main closes the Coordinator terminal and reports the stopping point to the user.
 
 ## Resume
 
-Durable wave state lives in Orca rows, Linear, and the two temporary files, never in a chat transcript:
+Durable wave state lives in Orca rows, the configured tracker, and the two temporary files, never in a chat transcript:
 
 | State | Source |
 |---|---|
@@ -54,7 +58,7 @@ Durable wave state lives in Orca rows, Linear, and the two temporary files, neve
 | Alignment and wave Tasks | `task-list --run <run> --brief --json` |
 | Terminal ownership | `worker-list --run <run> --json` |
 | Confirmed Wave Manifest and handoff | the temporary-directory paths recorded when they were generated |
-| Ticket truth | `orca linear issue <id> --full --json` |
+| Ticket truth | the full-read operation in `docs/agents/issue-tracker.md` |
 
 To resume:
 
@@ -62,6 +66,8 @@ To resume:
 2. Sweep the inbox with plain `check --json` and process any unacknowledged Delivery first; replay is by design, so nothing else happens until that batch is handled.
 3. Scope `task-list --run` and `worker-list --run` to that Run to see what is live, retained, or settled.
 4. Read the Wave Manifest from its recorded path. If it is gone, the confirmed parameters are gone with it: re-run the Execution Profile Gate and get fresh user confirmation instead of inferring profiles from running terminals.
-5. Reconcile each ticket from Linear plus its worktree `HEAD` before dispatching anything new.
+5. Reconcile each ticket through the Wave Manifest's Tracker Adapter plus its worktree `HEAD` before dispatching anything new.
+
+If the current integration identity or Adapter revision differs from the Wave Manifest, preserve the wave and report setup drift. Do not migrate an active wave or switch providers during recovery.
 
 Broad inventory commands (`run-list`, `terminal list`, `worktree list`) belong to this recovery path and an explicit legacy-run handoff, not to the normal loop.

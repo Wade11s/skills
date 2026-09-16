@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-15
+
+- [Add]: `skills/setup-orca-development-loop/` + one explicit onboarding flow that replaces `setup-matt-pocock-skills` for Orca-loop repositories, selects and certifies an Orca-recognized primary tracker, resolves Matt-compatible project docs and validation, collects user-selected role profiles, and proves their launch recipes in disposable Orca probes.
+- [Add]: capability-based Tracker Adapter and setup manifest contracts, separating the primary work tracker from the PR/MR surface and recording Alignment, Execution, and dependency-evidence mode independently.
+- [Update]: `skills/orca-development-loop/` + consume setup-certified configuration, support any qualifying Orca tracker integration, and remove normal-path Linear commands and full model discovery.
+- [Update]: agent profile configuration + store project routing policy and per-host user profiles in schema v2, while keeping current headroom and wave-specific confirmation in the immutable Wave Manifest.
+- [Fix]: Wave Manifest v3 + freeze every referenced role profile in one self-contained dictionary, including independent Integration Worker/Reviewer definitions, exact launch recipes, concurrency, certification, and current headroom.
+- [Fix]: delivery blocker contract + require a complete blocker set including wave-external dependencies for every ticket; user-provided order controls scheduling but no longer substitutes for blocker evidence.
+- [Fix]: tracker write readiness + require explicit revision-, scope-, phase- and operation-bound risk acceptance for unexercised writes; freeze acceptance at handoff and block stale or missing consent.
+- [Update]: centralize dependency fallback and launchability in the Tracker Adapter contract instead of repeating policy in setup and runtime callers.
+- [Update]: skill evals and trigger cases + cover setup migration, integration capability modes, native/custom launch certification, provider-neutral delivery, and configuration drift.
+
 ## 2026-09-09
 
 - [Add]: `skills/orca-development-loop/` + Route a repository's two-phase Orca loop: Alignment Agent to Linear tickets, then a top-level Coordinator for Worker, Reviewer, fix, integration, and merge cycles.

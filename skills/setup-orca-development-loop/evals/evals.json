@@ -1,0 +1,161 @@
+{
+  "skill_name": "setup-orca-development-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just imported this repository into Orca. Configure everything needed for the development loop. Orca shows one connected work tracker.",
+      "expected_output": "Inspects the repository and Orca read-only, prechecks the sole integration, proposes it as the primary tracker, and asks one section at a time before any write.",
+      "files": [],
+      "expectations": [
+        "Does not ask the user to run setup-matt-pocock-skills",
+        "Discovers Orca integrations before selecting a tracker",
+        "Does not infer the tracker from the Git remote",
+        "Performs no tracker write or agent launch without separate consent",
+        "Plans all six docs/agents outputs plus one root Agent skills update"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This GitHub repository uses Linear for tickets and GitHub for pull requests. Both integrations are visible in Orca. Set up the loop.",
+      "expected_output": "Separates the primary work tracker from the code-review surface, recommends Linear for work and GitHub for review, then certifies only the chosen tracker Adapter.",
+      "files": [],
+      "expectations": [
+        "Does not choose GitHub Issues merely from the remote",
+        "Records one primary work tracker",
+        "Records GitHub separately as the code-review surface",
+        "Runs read-only eligibility checks before recommendation",
+        "Runs full certification only after user confirmation"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "This repo already has docs/agents files from setup-matt-pocock-skills, including GitHub Issues. Adopt what is still valid and migrate it for Orca.",
+      "expected_output": "Treats existing configuration as a preference, reconciles it with Orca integration facts, previews a complete migration, and writes only after confirmation.",
+      "files": [],
+      "expectations": [
+        "Preserves valid domain and triage decisions",
+        "Validates the existing tracker integration before adopting it",
+        "Does not overwrite old files before showing the complete draft",
+        "Creates the Orca setup manifest and environment/profile documents",
+        "Updates the existing root Agent skills block in place"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Orca links pull requests for this repo, but there is no issue or work-item integration. Finish setup anyway using local markdown tickets.",
+      "expected_output": "Refuses to mark the Orca loop ready because a review integration is not a primary work tracker and local markdown is not an Orca-recognized candidate.",
+      "files": [],
+      "expectations": [
+        "Distinguishes PR linkage from issue lifecycle capability",
+        "Does not silently fall back to local markdown",
+        "Preserves any existing tracker document",
+        "Names connecting or repairing an Orca tracker integration as the next action"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The selected Orca tracker can read and complete existing work items but cannot search or create them. Configure what is safe.",
+      "expected_output": "Records execution-only mode with Alignment blocked and does not claim full readiness.",
+      "files": [],
+      "expectations": [
+        "Certifies capabilities individually",
+        "Sets Alignment readiness to blocked",
+        "Sets Execution readiness only if all required execution operations pass",
+        "Does not invent a create command",
+        "Records adapter-readback, verified-alternate, or user-attestation-required as the dependency evidence mode",
+        "Does not treat a single ticket as implicitly blocker-free"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Recommend the agent setup for two parallel tickets. I will choose the actual models myself.",
+      "expected_output": "Recommends role capabilities, pool shape, and concurrency without naming exact models, then waits for user-supplied profiles.",
+      "files": [],
+      "expectations": [
+        "Distinguishes profile count from concurrent agent instances",
+        "Recommends one Alignment and one Coordinator profile",
+        "Explains when a second Worker or Reviewer profile adds failover value",
+        "Requires cross-family review unless the user records an exception",
+        "Does not enumerate model catalogs"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Use these exact profiles: Codex model X high for workers and Claude model Y high for reviewers. Verify them in Orca before saving.",
+      "expected_output": "Validates only the supplied candidates, requests consent for a Probe Run, and certifies each unique launch recipe through a no-edit lifecycle Task.",
+      "files": [],
+      "expectations": [
+        "Does not replace the user-supplied models",
+        "Checks agent, model, reasoning, auth, family, and launch expressiveness",
+        "Explains model quota and Orca resource side effects before launching",
+        "Requires profile attestation and exactly one worker_done",
+        "Verifies repository state is unchanged and safely disposes probe resources"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "My Pi reviewer profile needs custom CLI arguments that worker-start cannot express. Certify it.",
+      "expected_output": "Uses the custom-argv path: structured argv, terminal creation, bounded TUI readiness, then supervised worker-start on the existing terminal.",
+      "files": [],
+      "expectations": [
+        "Stores argv as structured values rather than an interpolated shell string",
+        "Waits for tui-idle before injection",
+        "Uses worker-start --terminal for lifecycle ownership",
+        "Uses a harness-native attestation",
+        "Does not treat dispatch --inject as supervised ownership"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "I do not allow a temporary tracker issue, but read access works. Continue setup.",
+      "expected_output": "Records tracker reads as passed and writes as declared-not-exercised, surfaces the risk, and never calls the write path.",
+      "files": [],
+      "expectations": [
+        "Respects the refusal",
+        "Does not mark writes passed",
+        "Does not create or edit a tracker item",
+        "Carries the unexercised-write status into the setup manifest",
+        "Asks separately for scoped acceptance of real work as the first write test",
+        "Leaves write-dependent phases blocked until that acceptance is explicit"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "This repo is already configured on my laptop, but I just imported it on a second Orca host. Refresh only what is host-specific.",
+      "expected_output": "Preserves project policy and the Tracker Adapter, adds or updates one host profile entry, and re-certifies launch recipes for this Orca version.",
+      "files": [],
+      "expectations": [
+        "Uses the multi-host profile schema",
+        "Does not inherit another host's launch certification",
+        "Preserves tracker, domain, complexity, and assignment policy unless drift is found",
+        "Revalidates worktree setup and current-host profiles",
+        "Does not store credentials or current headroom"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Run the setup again on this unchanged repository and host.",
+      "expected_output": "Adopts all still-valid values, avoids duplicate questions and root sections, and produces an idempotent no-op after bounded revalidation.",
+      "files": [],
+      "expectations": [
+        "Reads existing setup before asking",
+        "Does not duplicate the Agent skills block",
+        "Does not rerun tracker writes or profile probes when certifications remain valid",
+        "Reports the existing Alignment and Execution readiness"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "All other setup gates passed. I declined the tracker probe, but explicitly accept real execution writes as the first test for Adapter rev-7, project P, operations comment, lifecycle, triage and worktree-link. I do not accept Alignment writes.",
+      "expected_output": "Records revision-, scope-, operation- and phase-bound acceptance, permits Execution readiness only, and retains declared-not-exercised certification.",
+      "files": [],
+      "expectations": [
+        "Stores unexercisedWritesAcceptedByUserAt with the exact confirmation reference",
+        "Keeps Alignment blocked",
+        "Marks Execution ready only if all required writes are covered",
+        "Does not mark writes passed or exercise the declined probe"
+      ]
+    }
+  ]
+}
+

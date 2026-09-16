@@ -1,6 +1,6 @@
 # Incremental Re-review Task Template
 
-This is a **delta Task** for the retained Reviewer. The original role, confirmed profile, Linear/spec context, project docs, Orca guidance, and loaded review protocol remain valid unless listed under Invalidations. The fresh Dispatch lifecycle envelope supplies the new IDs, capability, and exact completion command.
+This is a **delta Task** for the retained Reviewer. The original role, confirmed profile, tracker ticket/spec context, project docs, Orca guidance, and loaded review protocol remain valid unless listed under Invalidations. The fresh Dispatch lifecycle envelope supplies the new IDs, capability, and exact completion command.
 
 ## Delta
 

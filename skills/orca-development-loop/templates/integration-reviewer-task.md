@@ -2,7 +2,7 @@
 
 ## Role and profile
 
-Read-only Integration Reviewer for `<TICKET-ID>` in the assigned integration checkout.
+Read-only Integration Reviewer for `<TICKET-REF>` in the assigned integration checkout.
 
 Confirmed profile: `<harness> / <model> / <reasoning>`.
 Checkout: `<existing Issue Worktree after clean-preflight repair | dedicated Integration Worktree after conflict resolution>`.

@@ -74,7 +74,7 @@ A Reviewer follows the Worker lifecycle but remains read-only and reports two se
 - **process outcome**: whether review completed;
 - **verdict**: `ACCEPT` or `REQUEST_CHANGES`.
 
-A completed review that requests changes uses `outcome=succeeded`. Its report names the fixed point, reviewed head, commands, findings with severity/evidence, verdict, and residual risks. It leaves fixes to the Worker and changes issue state only when the Task explicitly grants a Linear comment write.
+A completed review that requests changes uses `outcome=succeeded`. Its report names the fixed point, reviewed head, commands, findings with severity/evidence, verdict, and residual risks. It leaves fixes to the Worker and performs no tracker write unless the Task explicitly grants one through the configured Adapter.
 
 ## Follow-up ownership
 
@@ -85,12 +85,12 @@ For delivery Workers and Reviewers, after `worker_done` the Coordinator accounts
 - `worker-retain` parks it for a likely fix/re-review cycle;
 - `worker-start --task <next> --terminal <handle>` reuses that retained session, taking the handle from `worker.agent_terminal_handle` in `worker-show --dispatch <id> --json` so Orca transfers cleanup ownership to the new Dispatch;
 - a retained-session Task is a delta: send the mandatory fresh lifecycle envelope plus changed commits, complete active findings, acceptance changes, and explicit reference invalidations;
-- keep stable role/profile, Orca guidance, issue/spec, and project docs in cached session context rather than repeating them in the delta Task;
+- keep stable role/profile, Orca guidance, tracker ticket/spec, and project docs in cached session context rather than repeating them in the delta Task;
 - if retained-session reuse is rejected or stale, a fresh role terminal in the same worktree receives the full role Task plus durable commits/report/findings;
 - `worker-release` closes a settled owned resource when its context is no longer needed;
 - `worker-stop` cancels a live supervised Worker, and `worker-abandon` fences one whose process cannot be proven stopped.
 
-Retained terminals are context caches. The worktree, commits, Linear issue, and review artifact remain the durable source of truth, so replacement remains safe. `worker-list --run <run>` reports terminal accounting separately from Task status when ownership needs an audit.
+Retained terminals are context caches. The worktree, commits, configured tracker ticket, and review artifact remain the durable source of truth, so replacement remains safe. `worker-list --run <run>` reports terminal accounting separately from Task status when ownership needs an audit.
 
 ## Main and Coordinator
 

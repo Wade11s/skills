@@ -2,7 +2,7 @@
 
 ## Role and profile
 
-Integration Worker for accepted ticket `<TICKET-ID>`.
+Integration Worker for accepted ticket `<TICKET-REF>`.
 
 Confirmed profile: `<harness> / <model> / <reasoning>`.
 Work only in the assigned integration checkout `<selector/path>` at candidate `<sha>`.
