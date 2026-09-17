@@ -4,6 +4,10 @@ Load this reference before the first tracker operation in Alignment or
 Execution. `docs/agents/issue-tracker.md` is the repository-specific Adapter:
 it maps this normalized contract to exact, setup-certified commands.
 
+This reference remains the runtime authority; setup also renders
+repository-local copies of the blocker evidence and write eligibility contracts
+there, so update those copies whenever either contract changes.
+
 ## Runtime interface
 
 Use only these operation groups:
@@ -56,6 +60,8 @@ Alignment, Main, and Coordinator. The Wave Manifest defines its storage shape.
 5. An unsatisfied external blocker prevents dispatch. Exclude the ticket or
    report it blocked. An unsatisfied in-wave blocker waits for integration and
    tracker readback; every `inWave: true` reference resolves to a manifest ticket.
+   If that blocker ends `blocked` or `abandoned`, do not launch the dependent:
+   mark it `blocked` with the same reason and report both tickets.
 6. `deliveryOrder` is scheduling only, never evidence of blocker completeness.
    Cover executable tickets exactly once, with unsatisfied blockers in earlier
    batches, not alongside their dependents. Cycles have no launchable frontier.
@@ -140,19 +146,20 @@ the configured primary tracker during a delivery request.
 After reviewed integration in `local-only` or `push-base` mode:
 
 1. publish commit/review and validation evidence;
-2. apply the configured completed lifecycle value;
+2. apply the configured completed lifecycle value without regressing state;
 3. remove the AFK-ready role;
 4. attach review evidence when configured;
 5. read the work item back and record observed state.
 
-In `pull-request` mode, require the implementation-branch push plus canonical
-PR/MR link readback, then post that link and validation evidence. Do not apply
-the completed lifecycle value. Leave classification untouched unless the
-optional `in-review` role is mapped; when it is, apply that role and remove
-AFK-ready. Read the ticket back and report `submitted`.
+After successful `pull-request` publication under the
+[main-advance and publication procedure](issue-worktree-loop.md#main-advance-and-publication),
+post the canonical link and validation evidence. Do not apply the completed
+lifecycle value. Leave classification untouched unless the optional `in-review`
+role is mapped; when it is, apply that role and remove AFK-ready. Read the ticket
+back and report `submitted`.
 
-Sweep parents only when parent reads are certified. A parent closes only when
-all children are complete and its scope is exhausted. Otherwise leave it open
-with a reason. Provider readback, not a successful command exit alone, proves
-completion.
+Sweep ancestors only when parent reads are certified. Close an ancestor only
+when all children are complete and its scope is exhausted; otherwise leave it
+open with a reason. Provider readback, not a successful command exit alone,
+proves completion.
 

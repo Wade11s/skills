@@ -28,7 +28,9 @@ This repository uses a <single-context|multi-context> domain-doc layout. See
 
 ### Agent environment
 
-Worktree setup, validation tiers, and certified role profiles are recorded in
-`docs/agents/environment.md` and `docs/agents/agent-profiles.md`.
+Worktree setup and validation tiers are recorded in
+`docs/agents/environment.md`; shared routing policy is in
+`docs/agents/agent-profiles.md`, and this host's gitignored role profiles are in
+`docs/agents/agent-hosts.local.yaml`.
 ```
 

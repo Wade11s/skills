@@ -8,7 +8,7 @@
       "files": [],
       "expectations": [
         "Reads docs/agents/orca-development-loop.md before bootstrapping or touching tickets",
-        "Uses the current host's configured Alignment profile rather than discovering a model",
+        "Uses the current host's configured Alignment profile from docs/agents/agent-hosts.local.yaml rather than discovering a model",
         "Waits for explicit confirmation before creating a Task or terminal",
         "Creates the complete Task before launch",
         "Inlines the user's request and asks the user to switch only after profile verification"
@@ -85,7 +85,7 @@
       "expected_output": "Revalidates only configured entries, reads headroom fresh, presents the exact pools and capacity, and waits for confirmation.",
       "files": [],
       "expectations": [
-        "Reads the current host binding and certification",
+        "Reads the current host binding and certification from docs/agents/agent-hosts.local.yaml",
         "Does not enumerate all models, agents, accounts, or executables",
         "Reads current headroom rather than a stored value",
         "Shows maxParallelTickets and maxConcurrent",

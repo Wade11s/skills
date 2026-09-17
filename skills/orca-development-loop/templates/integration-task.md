@@ -19,4 +19,6 @@ When the preflight contains content conflicts, this Task must use the dedicated 
 
 The resulting state is new and requires an Integration Reviewer in this same checkout before main advances.
 
-Follow the injected Orca lifecycle command and IDs. Send exactly one `worker_done` with the integration commit, resolved files, decisions, tests, and residual risk; then idle.
+Send one `worker_done` through the injected lifecycle command with the
+integration commit, resolved files, decisions, tests, and residual risk; then
+idle.

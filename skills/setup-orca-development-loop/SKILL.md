@@ -40,6 +40,8 @@ Setup is complete when:
 - the user has supplied every long-lived agent profile and each launch recipe
   required by a ready phase has passed; policy exceptions are recorded
   separately;
+- host-specific profiles live only in the gitignored
+  `docs/agents/agent-hosts.local.yaml`;
 - `docs/agents/orca-development-loop.md` points at complete configuration
   documents with no placeholders;
 - probe resources are settled and product files are unchanged.
@@ -86,6 +88,10 @@ Repository facts:
 - any legacy Matt setup or Linear-only Orca-loop configuration.
 
 Orca facts:
+
+`ORCA` is the executable resolved once through the `orchestration` skill's
+resolution rule, substituted before running anything, never exported as a shell
+variable.
 
 - resolve one Orca executable and load its version-matched `orca-cli` and
   `orchestration` guides;
@@ -264,6 +270,10 @@ The user supplies exact agent/harness, model, reasoning/effort, role bindings,
 tier coverage, and concurrency. Do not silently replace a supplied profile.
 Offer model alternatives only when the user asks.
 
+Store shared complexity and assignment policy in
+`docs/agents/agent-profiles.md`; store every host profile and certification in
+gitignored `docs/agents/agent-hosts.local.yaml`.
+
 For each unique profile, validate:
 
 - Orca recognizes the agent;
@@ -317,8 +327,9 @@ Coordinator create another Run or dispatch workers.
 
 Persist structured launch fields and evidence, not runtime handles or a
 shell-quoted command string. Keep supervised and full-handoff recipes and
-certifications separate. Certification is keyed by Orca host, Orca version,
-agent, model, reasoning, launch purpose, and launch mode.
+certifications separate in `docs/agents/agent-hosts.local.yaml`. Certification
+is keyed by Orca host, Orca version, agent, model, reasoning, launch purpose,
+and launch mode.
 
 ## 9. Preview and write
 
@@ -330,7 +341,15 @@ Render drafts from `templates/`:
 - `docs/agents/domain.md`;
 - `docs/agents/environment.md`;
 - `docs/agents/agent-profiles.md`;
+- `docs/agents/agent-hosts.local.yaml`;
+- the `.gitignore` addition shown below;
 - the root `## Agent skills` update.
+
+Add this exact line to `.gitignore`:
+
+```gitignore
+docs/agents/agent-hosts.local.yaml
+```
 
 Choose the root instruction file exactly once:
 
@@ -340,16 +359,26 @@ Choose the root instruction file exactly once:
 
 Update an existing `## Agent skills` block in place. Preserve surrounding user
 content. Show every complete draft and let the user edit it before writing.
-Write only after one final confirmation and never leave `<placeholder>` values.
+Show the `.gitignore` delta with the other repository writes, get the same final
+consent, and never leave `<placeholder>` values.
 
-Resolve template-relative skill links when rendering repository documents or
-temporary Tasks/handoffs. Use installed-skill references the receiving agent can
-open from its checkout; never copy a relative source-template path verbatim.
+Temporary Tasks and handoffs delivered to a launched agent may reference
+installed-skill paths because the receiving agent has the skill.
 
 For legacy configuration, adopt confirmed values, convert Linear-specific
 language to the selected Adapter, and migrate agent profile schema only in the
-previewed write. An active wave keeps its frozen manifest and is not migrated
-mid-run.
+previewed write. When committed `docs/agents/agent-profiles.md` contains
+`hosts:`, move those entries into `docs/agents/agent-hosts.local.yaml`, remove
+them from the committed file, and verify that the local file is not tracked. If
+`git ls-files --error-unmatch docs/agents/agent-hosts.local.yaml` shows that the
+path is already in the index, report this exact cleanup command:
+
+```bash
+git rm --cached docs/agents/agent-hosts.local.yaml
+```
+
+Setup does not rewrite Git history. An active wave keeps its frozen manifest
+and is not migrated mid-run.
 
 ## 10. Verify and report
 
@@ -357,6 +386,8 @@ Read every written file back and confirm:
 
 - front matter and YAML blocks parse;
 - the setup manifest points at existing files;
+- `.gitignore` contains exactly one
+  `docs/agents/agent-hosts.local.yaml` entry, and the local file is not tracked;
 - readiness agrees with certified capabilities;
 - `publication.mode`, its exact remote or `none`, and any PR/MR create and
   readback commands agree with the selected code-review surface;
@@ -365,7 +396,8 @@ Read every written file back and confirm:
   freezes the resulting completeness receipt;
 - the root block is not duplicated;
 - no secret or ephemeral ID was stored;
-- every certified profile belongs to the current host and Orca version;
+- every certified profile in `docs/agents/agent-hosts.local.yaml` belongs to the
+  current host and Orca version;
 - every launch recipe records `effectiveProfileEvidence`; `receipt` has
   `command: null`, `attestation` has one read-only command, and
   `user-attested` retains exact confirmed argv plus its limitation;
@@ -374,8 +406,8 @@ Read every written file back and confirm:
 
 Report Alignment and Execution readiness separately, any unexercised tracker
 writes, the selected tracker and review surface, publication mode, validation
-commands, certified role bindings, retained probe evidence, any
-`user-attested` limitation, and the exact next action. Later edits to
-long-lived setup should go through this skill so the manifest and
-certifications remain coherent.
+commands, the local host-profile path, certified role bindings, retained probe
+evidence, any `user-attested` limitation, migration index cleanup when
+applicable, and the exact next action. Later edits to long-lived setup should go
+through this skill so the manifest and certifications remain coherent.
 

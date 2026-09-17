@@ -6,6 +6,12 @@
 - [Add]: publication modes + freeze `local-only`, `push-base`, or `pull-request` authority in each Wave Manifest and report reviewed PR/MR submissions as `submitted`.
 - [Fix]: Wave Manifest revisions + add a confirmed `manifest_revision` handoff channel, safe-point validation, bounded revision scope, and per-ticket manifest-version reporting.
 - [Fix]: effective-profile evidence + use composed-launch receipts as normative evidence and degrade custom launches without a documented attestation command to explicit `user-attested` evidence.
+- [Update]: Orca loop authorities + keep each tracker, integration, cleanup, blocker, profile, lifecycle, and publication rule in one authority while executor files retain only steps and links.
+- [Update]: Orca mail terminology + call unacknowledged FIFO messages a mail batch and reserve delivery for its ordinary workflow meaning.
+- [Fix]: portable Orca commands + use the resolved `ORCA` executable placeholder in command blocks instead of invoking a host's bare `orca`.
+- [Fix]: self-contained setup documents + inline blocker and write eligibility contracts in the rendered Tracker Adapter and point readiness links at repository-local anchors.
+- [Update]: host-local agent profiles + keep shared routing policy committed while moving host identity, exact models, and launch recipes to gitignored `docs/agents/agent-hosts.local.yaml`.
+- [Fix]: deterministic wave artifacts + derive the OS temporary wave directory name from the path-safe `waveId` so a resumed Main session can find it.
 
 ## 2026-09-15
 

@@ -17,4 +17,6 @@ Checkout: `<existing Issue Worktree after clean-preflight repair | dedicated Int
 
 Review the final integrated state and the integration-repair delta. For a conflict path, include the conflict resolution; for a clean-preflight validation repair, compare against the preserved mechanical candidate. Verify that the result preserves accepted ticket behaviour and current main behaviour, introduces no unrelated change, and passes the required final checks. Do not edit or commit.
 
-Report `outcome` separately from `verdict`. `REQUEST_CHANGES` uses `outcome=succeeded`. Follow the injected lifecycle command and IDs, send one `worker_done` with findings/evidence/verdict, then idle for retain/reuse/release.
+Report `outcome` separately from `verdict`; `REQUEST_CHANGES` uses
+`outcome=succeeded`. Send one `worker_done` through the injected lifecycle
+command with findings, evidence, and verdict, then idle.

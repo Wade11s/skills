@@ -1,11 +1,13 @@
 # Agent Profiles
 
-Seed for `docs/agents/agent-profiles.md`. It stores project routing policy plus
-host-specific, user-supplied profiles and certified launch recipes. It never
-stores credentials or current headroom.
+## Shared project policy
+
+Seed for committed `docs/agents/agent-profiles.md`. It stores only shared
+project routing policy and names the local host-profile file.
 
 ```yaml
-schemaVersion: 2
+schemaVersion: 3
+hostProfilesFile: docs/agents/agent-hosts.local.yaml
 
 projectPolicy:
   complexity:
@@ -30,7 +32,16 @@ projectPolicy:
     escalationPrefersUnusedEntry: true
     maxParallelTickets: <positive integer>
     maxIncrementalReReviews: 2
+```
 
+## Local host profiles
+
+Seed for gitignored `docs/agents/agent-hosts.local.yaml`. It stores
+host-specific, user-supplied profiles and certified launch recipes, never
+credentials or current headroom.
+
+```yaml
+schemaVersion: 1
 hosts:
   <Orca host key>:
     identity:
@@ -99,30 +110,3 @@ hosts:
             requestedEffectiveMatch: <true|false|null>
             repositoryUnchanged: <true|false|null>
 ```
-
-## Runtime revalidation
-
-The file replaces discovery, not per-wave confirmation. Revalidate only the
-entries the wave will launch:
-
-1. schema and exact host entry;
-2. compatible Orca version and certified launch mode;
-3. agent/model availability and one bounded auth check;
-4. fresh provider headroom;
-5. Worker/Reviewer family and tier coverage.
-
-Every role-binding ID resolves in the same host's `profiles` map. Integration
-bindings may point at dedicated profiles outside the ordinary pools, but those
-definitions must still be complete and certified for supervised launch.
-
-Use `receipt` only for a composed `worker-start --agent --model --effort`
-launch; its start receipt's `launch.effective` is normative, so `command` is
-`null`. A pre-created-terminal or full-handoff recipe uses one
-harness-documented read-only `attestation` command. When none exists, use
-`user-attested`, set `command` to `null`, retain the exact user-confirmed
-`argv`, and surface that limitation whenever the profile is confirmed.
-
-If a configured entry fails, use another already confirmed pool entry. A
-profile outside the pool is a one-wave user-confirmed override or requires
-rerunning `/setup-orca-development-loop`.
-

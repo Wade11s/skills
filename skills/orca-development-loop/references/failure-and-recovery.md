@@ -24,15 +24,16 @@ Every wave ticket ends in exactly one state, and `wave_done` reports it:
 | State | Meaning | Required handling |
 |---|---|---|
 | `integrated` | reviewed, merged, tracker completion applied and read back | normal cleanup |
-| `submitted` | reviewed, validated, implementation branch pushed, PR/MR link read back, and published for human merge | post link and validation evidence; leave completed lifecycle unapplied; leave classification unchanged unless optional `in-review` is mapped, then apply it and remove AFK-ready; normal cleanup |
+| `submitted` | reviewed, validated, and published for human merge under the frozen mode | normal cleanup |
 | `blocked` | cannot proceed without a decision or an unmet dependency | escalate to Main with evidence; preserve commits, branch, worktree, and review artifacts |
 | `abandoned` | the user stopped it, or repair attempts were exhausted | preserve the same artifacts and name the reason |
 
-Blocking propagates: a ticket whose blocker ends `blocked` or `abandoned` never launches. Mark it `blocked` with the same reason and report both rather than dispatching into a broken dependency.
+Apply publication and tracker completion through
+[Main advance and publication](issue-worktree-loop.md#main-advance-and-publication)
+and [Completion](tracker-adapter.md#completion).
 
-A missing complete-set attestation is missing launch evidence, not an empty
-blocker list. An unsatisfied blocker outside the wave also keeps the dependent
-ticket blocked; a user-provided delivery order cannot override either case.
+Apply dependency-failure propagation and launchability through the
+[blocker evidence contract](tracker-adapter.md#blocker-evidence-contract).
 
 **Review that never converges.** After the manifest's `maxIncrementalReReviews` focused cycles, run one clean-room review with a fresh Reviewer and the full Task. If that pass also returns `REQUEST_CHANGES`, stop dispatching fixes: the ticket is `blocked`, and Main receives both review artifacts and the surviving finding list.
 
@@ -62,22 +63,28 @@ When the user asks to stop an active ticket or the whole wave:
 
 ## Resume
 
-Durable wave state lives in Orca rows, the configured tracker, and the two temporary files, never in a chat transcript:
+Durable wave state lives in Orca rows, the configured tracker, and the two
+temporary files, never in a chat transcript:
 
 | State | Source |
 |---|---|
-| Main Run binding | `orca orchestration run-current --json` |
+| Main Run binding | `ORCA orchestration run-current --json` |
 | Alignment and wave Tasks | `task-list --run <run> --brief --json` |
 | Terminal ownership | `worker-list --run <run> --json` |
-| Confirmed Wave Manifest and handoff | the temporary-directory paths recorded when they were generated |
+| Confirmed Wave Manifest and handoff | the OS temporary wave directory whose name is derived from `waveId` |
 | Ticket truth | the full-read operation in `docs/agents/issue-tracker.md` |
 
 To resume:
 
 1. Re-establish the Main Run with `run-current --json`.
-2. Sweep the inbox with plain `check --json` and process any unacknowledged Delivery first; replay is by design, so nothing else happens until that batch is handled.
+2. Sweep the inbox with plain `check --json` and process any unacknowledged mail
+   batch first; replay is by design, so nothing else happens until that batch is
+   handled.
 3. Scope `task-list --run` and `worker-list --run` to that Run to see what is live, retained, or settled.
-4. Read the Wave Manifest from its recorded path. If it is gone, the confirmed parameters are gone with it: re-run the Execution Profile Gate and get fresh user confirmation instead of inferring profiles from running terminals.
+4. Compute the OS temporary wave directory from `waveId` and read the Wave
+   Manifest there. If it is gone, re-run the complete Execution Gate and get
+   fresh user confirmation instead of inferring parameters from running
+   terminals.
 5. Reconcile each ticket through the Wave Manifest's Tracker Adapter plus its worktree `HEAD` before dispatching anything new.
 
 If the current integration identity or Adapter revision differs from the Wave Manifest, preserve the wave and report setup drift. Do not migrate an active wave or switch providers during recovery.

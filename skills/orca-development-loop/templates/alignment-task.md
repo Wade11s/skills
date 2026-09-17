@@ -58,4 +58,7 @@ After alignment begins, read `docs/agents/orca-development-loop.md` and project 
 
 Classify every executable ticket with the representation and vocabulary in `docs/agents/agent-profiles.md`, so delivery can route each ticket to a suitable profile.
 
-Read the resulting tracker state back. Apply the [blocker evidence contract](../references/tracker-adapter.md#blocker-evidence-contract) before computing the frontier. Send the completion shape from the Alignment Agent reference through exactly one injected `worker_done`, then idle for Main to release the terminal. This Alignment session is single-use.
+Read the resulting tracker state back and apply the
+[blocker evidence contract](../references/tracker-adapter.md#blocker-evidence-contract).
+Send one `worker_done` through the injected lifecycle command with the Alignment
+Agent completion payload, then idle for Main to release this single-use session.

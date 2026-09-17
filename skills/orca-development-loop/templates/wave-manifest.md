@@ -5,7 +5,7 @@ schemaVersion: 4
 version: <positive integer; start at 1>
 supersedes: <prior version or null>
 revisionReason: <reason or null>
-waveId: <stable human-readable wave id>
+waveId: <stable path-safe human-readable wave id>
 objective: <one sentence>
 baseRef: <exact configured base ref>
 mainRunId: <return Run id>
@@ -50,7 +50,7 @@ deliveryOrder:
   confirmedByUserAt: <source message reference or null>
 
 profilesSource:
-  type: <docs/agents/agent-profiles.md|one-wave-override|mixed>
+  type: <docs/agents/agent-hosts.local.yaml|one-wave-override|mixed>
   hostKey: <Orca host key>
   certifiedOrcaVersion: <version>
   frozenAt: <timestamp>
@@ -137,65 +137,21 @@ policies:
 
 ## Publication authority
 
-The frozen `publication.mode` is authority for exactly that behavior:
-
-- `local-only` advances the local base ref and pushes nothing;
-- `push-base` advances the local base ref, then fast-forward pushes that base to
-  `publication.remote` and reads the remote ref back;
-- `pull-request` leaves the local base ref unchanged, pushes the accepted
-  implementation branch to `publication.remote`, and runs the exact PR-create
-  command through the configured code-review surface.
-
-Force push, a different branch, or another remote requires separate explicit
-user authority.
+Freeze `mode`, `remote`, `pullRequestCreateCommand`, and
+`pullRequestReadbackCommand`, then execute them through the
+[main-advance and publication procedure](../references/issue-worktree-loop.md#main-advance-and-publication).
 
 ## Blocker evidence
 
-Populate and validate `tickets[].blockers` and `deliveryOrder` under the
-[blocker evidence contract](../references/tracker-adapter.md#blocker-evidence-contract)
-before confirming this manifest. That contract owns fallback and launchability;
-this template owns the frozen storage shape.
+Populate the frozen `tickets[].blockers` and `deliveryOrder` shape under the
+[blocker evidence contract](../references/tracker-adapter.md#blocker-evidence-contract).
 
 ## Self-contained profiles
 
-`profiles` contains every profile this wave may launch, exactly once. Every ID
-under `roleBindings` and every ticket pin must resolve in that dictionary. The
-dictionary includes exact agent/model/reasoning, family, concurrency, fresh
-headroom, launch recipes, `effectiveProfileEvidence`, and certification facts
-even when an Integration profile is not in the ordinary Worker or Reviewer
-pool.
+Populate the frozen `profiles`, `roleBindings`, and ticket-pin shape through
+[Freeze a self-contained profile catalog](../references/profile-gate-and-launch.md#freeze-a-self-contained-profile-catalog).
 
-A ticket's Worker and Reviewer pins must also belong to the corresponding role
-binding; dictionary membership alone does not grant that role.
-
-The Coordinator uses only this frozen dictionary after handoff; it never reads
-mutable repository profile configuration to fill a missing definition.
-Coordinator requires `launch.fullHandoff`; supervised roles require
-`launch.supervised`. A missing ID, wrong launch purpose, or duplicate/conflicting
-definition invalidates the manifest before `run-create`.
-
-`pending-runtime-launch` is valid only for an explicit one-wave override and
-only on the purpose that role will use. A composed launch's
-`launch.effective` receipt is normative; a pre-created-terminal or full-handoff
-launch uses its recorded attestation command, or the exact user-confirmed argv
-in `user-attested` mode. Failure on observable evidence does not authorize a
-substitute outside the confirmed dictionary. Every confirmation names the
-independent-verification limitation of a `user-attested` profile.
-
-## Publication
-
-Copy `publication` from `docs/agents/environment.md` and show it at wave
-confirmation. The confirmed mode is authority for its exact remote and branch
-flow: `local-only` publishes nothing, `push-base` advances and pushes only the
-base ref, and `pull-request` pushes only accepted implementation branches and
-uses the frozen PR/MR commands. A force push, another branch, or another remote
-still requires explicit user authority.
-
-Copy tracker, workspace, validation, and selected profile facts from
-setup-certified documents, then add current blocker evidence, delivery order,
-headroom, ticket pins, and user confirmation. Include only referenced profiles;
-the set of dictionary keys must equal the unique IDs referenced by role
-bindings and pins.
+Copy setup-certified and current-wave facts into the YAML shape above.
 
 `schemaVersion` identifies this template's shape; `version` counts the
 confirmed revisions of one wave. They change independently.
@@ -215,7 +171,6 @@ them. A needed change to an in-flight ticket uses user abort, then a new wave.
 Follow the manifest-revision channel in the
 [Communication Contract](../references/communication-contract.md#manifest-revision-channel).
 
-Save the manifest beside the Coordinator handoff in the OS temporary directory
-and retain both paths in Main session state. Repository configuration is
-durable policy; this manifest is the only authoritative snapshot of current-wave
-parameters.
+Save the manifest beside the Coordinator handoff in the OS temporary wave
+directory whose name is `waveId`. Repository configuration is durable policy;
+this manifest is the only authoritative snapshot of current-wave parameters.

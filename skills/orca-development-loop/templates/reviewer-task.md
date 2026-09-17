@@ -29,4 +29,5 @@ Report process outcome separately from verdict:
 - completed with blocking findings: `outcome=succeeded`, `verdict=REQUEST_CHANGES`;
 - review could not be completed: `outcome=failed`.
 
-Follow the injected Orca lifecycle command and IDs. Send exactly one `worker_done`, end the turn, remain idle for retain/reuse/release, and do not send an extra SETTLED status.
+Send one `worker_done` through the injected lifecycle command with process
+outcome, verdict, commands, findings, evidence, and residual risks; then idle.

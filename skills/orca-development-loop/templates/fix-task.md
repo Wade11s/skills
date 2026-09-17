@@ -14,4 +14,6 @@ Address the findings without broad redesign or unrelated cleanup. If a finding r
 
 Add regression evidence for every correctness finding, run `<fastTier command>` plus targeted tests for the affected targets, commit the fix, and leave the Issue Worktree clean. Rerun `<fullSuite command>` when this ticket is `complex`, when the fix touches the manifest's shared core modules (`<validation.sharedCoreModules>`), or when the review flags cross-cutting risk, and report which tier ran in `worker_done`.
 
-Send exactly one `worker_done` through the fresh lifecycle envelope with the new head, changed files, tests, finding-by-finding disposition, and residual risk; then end the turn and idle for re-review.
+Send one `worker_done` through the injected lifecycle command with the new head,
+changed files, tests, finding-by-finding disposition, and residual risk; then
+idle for re-review.

@@ -14,4 +14,6 @@ This is a **delta Task** for the retained Reviewer. The original role, confirmed
 
 Review the incremental diff against every active prior finding and confirm that the fix introduces no regression or unrelated change. Continue using the already loaded review protocol; reload only an explicitly invalidated reference.
 
-Report process outcome separately from `ACCEPT` or `REQUEST_CHANGES`. Send exactly one `worker_done` through the fresh lifecycle envelope, then end the turn and remain idle.
+Report process outcome separately from `ACCEPT` or `REQUEST_CHANGES`. Send one
+`worker_done` through the injected lifecycle command with the verdict and
+findings, then idle.

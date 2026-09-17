@@ -11,7 +11,7 @@
         "Discovers Orca integrations before selecting a tracker",
         "Does not infer the tracker from the Git remote",
         "Performs no tracker write or agent launch without separate consent",
-        "Plans all six docs/agents outputs plus one root Agent skills update"
+        "Plans all seven docs/agents outputs, the .gitignore addition, and one root Agent skills update"
       ]
     },
     {
@@ -122,10 +122,11 @@
     {
       "id": 10,
       "prompt": "This repo is already configured on my laptop, but I just imported it on a second Orca host. Refresh only what is host-specific.",
-      "expected_output": "Preserves project policy and the Tracker Adapter, adds or updates one host profile entry, and re-certifies launch recipes for this Orca version.",
+      "expected_output": "Preserves committed project policy and the Tracker Adapter, adds or updates one entry in gitignored docs/agents/agent-hosts.local.yaml, and re-certifies launch recipes for this Orca version.",
       "files": [],
       "expectations": [
-        "Uses the multi-host profile schema",
+        "Keeps shared policy in docs/agents/agent-profiles.md and host entries in docs/agents/agent-hosts.local.yaml",
+        "Adds docs/agents/agent-hosts.local.yaml to .gitignore with consent",
         "Does not inherit another host's launch certification",
         "Preserves tracker, domain, complexity, and assignment policy unless drift is found",
         "Revalidates worktree setup and current-host profiles",
@@ -180,6 +181,32 @@
         "Does not invent an attestation command or inspect process environments",
         "Sets requestedEffectiveMatch to null while still exercising launch lifecycle and cleanup",
         "Requires the provider/model limitation at every later profile confirmation"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Render the repository setup docs for teammates who may not have either Orca loop skill installed.",
+      "expected_output": "Renders self-contained repository documents whose readiness links stay inside docs/agents and whose issue-tracker document contains the blocker and write eligibility contracts.",
+      "files": [],
+      "expectations": [
+        "Inlines the blocker evidence contract in docs/agents/issue-tracker.md",
+        "Inlines the write eligibility gate and certification.writes table in docs/agents/issue-tracker.md",
+        "Points docs/agents/orca-development-loop.md at local issue-tracker.md anchors",
+        "Leaves no rendered repository link into an installed skill",
+        "Keeps installed-skill links only in temporary Tasks or handoffs sent to launched agents"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Migrate an existing committed docs/agents/agent-profiles.md that contains projectPolicy and hosts entries.",
+      "expected_output": "Previews a split that keeps shared policy committed, moves hosts to the exact gitignored local filename, and reports index cleanup only if the local path is already tracked, without rewriting history.",
+      "files": [],
+      "expectations": [
+        "Removes hosts from docs/agents/agent-profiles.md while preserving schemaVersion and projectPolicy",
+        "Moves host entries to docs/agents/agent-hosts.local.yaml",
+        "Shows and gets consent for the exact .gitignore addition",
+        "Reports git rm --cached docs/agents/agent-hosts.local.yaml only when git ls-files proves that path is tracked",
+        "Does not rewrite Git history"
       ]
     }
   ]

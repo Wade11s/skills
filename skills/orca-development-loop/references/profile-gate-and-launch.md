@@ -6,8 +6,9 @@ runtime revalidates and assigns already user-confirmed entries.
 
 ## Stored configuration
 
-Read `docs/agents/agent-profiles.md` and select the exact host key named by the
-setup manifest. Require:
+Read project policy from `docs/agents/agent-profiles.md`, then select the exact
+host key named by the setup manifest from
+`docs/agents/agent-hosts.local.yaml`. Require:
 
 - understood schema;
 - current Orca project/host identity;
@@ -16,9 +17,10 @@ setup manifest. Require:
 - complete role bindings and launch recipes;
 - project complexity and assignment policy.
 
-A missing host, unsupported schema, stale launch recipe, or changed Orca
-capability is setup drift. Stop and ask for `/setup-orca-development-loop`
-instead of scanning the machine for replacement models.
+A missing local host file or host entry, unsupported schema, stale launch
+recipe, or changed Orca capability is setup drift. Stop and ask for
+`/setup-orca-development-loop` instead of scanning the machine for replacement
+models.
 
 ## Cheap revalidation
 
@@ -31,12 +33,32 @@ Check only entries this phase may launch:
 4. current headroom is read once when a usage source exists;
 5. family, tier coverage, and `maxConcurrent` satisfy the proposed assignment.
 
-Current headroom is never loaded from the profile file. With no usage source,
+Current headroom is never loaded from either profile file. With no usage source,
 record it as `unknown` and say so at confirmation; unknown is not unlimited.
 
 Do not enumerate every account, model, agent, executable, or quota. If a
 configured profile fails, try another already confirmed entry in that role's
-pool. When none remains, stop with the exact failure.
+pool. When none remains, stop with the exact failure; a persistent replacement
+requires `/setup-orca-development-loop`, while a user-supplied temporary
+candidate follows the one-wave override below.
+
+## Per-ticket assignment policy
+
+Resolve every role binding and ticket pin through the Wave Manifest's frozen
+profile dictionary; a pin must also belong to its corresponding role binding.
+Filter by complexity tier, require Worker and Reviewer families to differ unless
+the manifest records the user's exception, and enforce each profile's
+`maxConcurrent`. Apply the configured assignment strategy; for
+`most-headroom-then-round-robin`, prefer current headroom and break ties by least
+recently assigned. Keep the selected pair sticky through fix and re-review, and
+prefer a previously unused Reviewer for a requested clean-room pass.
+
+Integration-created state uses only `roleBindings.integrationWorker` and
+`roleBindings.integrationReviewer`, and its Reviewer differs in family from the
+profile that produced that state unless the same-family exception is recorded.
+Fail over only within the confirmed binding to an entry that still satisfies
+tier, family, and concurrency policy, and record the provider error and
+substitution. No out-of-pool profile is an automatic fallback.
 
 ## Per-phase confirmation
 
@@ -72,7 +94,12 @@ Before generating the Coordinator handoff:
 An independent Integration profile receives the same complete frozen definition
 even when it is absent from ordinary pools. After handoff, the Coordinator
 resolves profiles only from the Wave Manifest and never rereads mutable
-`docs/agents/agent-profiles.md`.
+repository profile configuration.
+
+A missing ID, a wrong launch purpose, a pin outside its own role binding, or a
+duplicate or conflicting definition invalidates the manifest. The receiving
+agent reports setup drift, creates no Run, and never fills the gap from
+repository configuration.
 
 ## One-wave override
 
@@ -81,12 +108,13 @@ candidate using the bounded static checks above: agent/model/reasoning
 acceptance, auth, family, and launch expressiveness. Record it in this Wave
 Manifest's profile dictionary, bind the affected role to its ID, and set
 `profilesSource.type` to `one-wave-override` or `mixed`; do not edit the
-repository profile file.
+repository profile files.
 
 Do not create a setup Probe Run during delivery. The real role launch is the
 override's launch test: apply the bounded evidence rule before allowing work.
-If replacement is needed after Coordinator startup, use the confirmed
-manifest-revision channel rather than an informal wait.
+`pending-runtime-launch` is valid only for an explicit override and the launch
+purpose that role will use. If replacement is needed after Coordinator startup,
+use the confirmed manifest-revision channel rather than an informal wait.
 
 Never invent or recommend an override on the user's behalf. A same-family
 review override requires a separate explicit decision in the manifest.
@@ -108,7 +136,7 @@ certifies the other. Apply the matching frozen `effectiveProfileEvidence`.
 For a composed supervised launch:
 
 ```text
-orca orchestration worker-start --task <task> --worktree <selector> \
+ORCA orchestration worker-start --task <task> --worktree <selector> \
   --agent <agent> --model <model> --effort <level> --run <run> --json
 ```
 
@@ -120,10 +148,10 @@ probe.
 For a pre-created terminal:
 
 ```text
-orca terminal create --worktree <selector> --command <rendered argv> --json
-orca terminal wait --terminal <handle> --for tui-idle \
+ORCA terminal create --worktree <selector> --command <rendered argv> --json
+ORCA terminal wait --terminal <handle> --for tui-idle \
   --timeout-ms <bounded> --json
-orca orchestration worker-start --task <task> --worktree <selector> \
+ORCA orchestration worker-start --task <task> --worktree <selector> \
   --terminal <handle> --run <run> --json
 ```
 

@@ -94,13 +94,13 @@ observed harness/model/reasoning. A `receipt` or `user-attested` Task performs n
 in-Task profile probe.
 
 Before either supervised launch path, create the complete probe Task with
-`orca orchestration task-create --spec` using the version-matched guide.
+`ORCA orchestration task-create --spec` using the version-matched guide.
 Record its returned Task ID as `<probe-task>`; pass that ID to `worker-start`.
 
 For Orca-composed launches:
 
 ```text
-orca orchestration worker-start --task <probe-task> --worktree <probe-worktree> \
+ORCA orchestration worker-start --task <probe-task> --worktree <probe-worktree> \
   --agent <agent> --model <model> --effort <level> --run <probe-run> --json
 ```
 
@@ -112,9 +112,9 @@ Task to attest the profile again.
 For custom argv:
 
 ```text
-orca terminal create --worktree <probe-worktree> --command <exact argv> --json
-orca terminal wait --terminal <handle> --for tui-idle --timeout-ms <bounded> --json
-orca orchestration worker-start --task <probe-task> \
+ORCA terminal create --worktree <probe-worktree> --command <exact argv> --json
+ORCA terminal wait --terminal <handle> --for tui-idle --timeout-ms <bounded> --json
+ORCA orchestration worker-start --task <probe-task> \
   --worktree <probe-worktree> --terminal <handle> --run <probe-run> --json
 ```
 
@@ -175,7 +175,7 @@ launch path was exercised but provider/model was not independently observable.
 Repeat that limitation at every later confirmation that uses the profile.
 
 After accepting each `worker_done`, release its supervised resource before
-acknowledging the Delivery. Close only unsupervised terminals with terminal
+acknowledging the mail batch. Close only unsupervised terminals with terminal
 commands. Inspect recovery receipts before retrying a failed launch. Remove the
 disposable worktree only after every process and checkout state has a proven
 disposition.

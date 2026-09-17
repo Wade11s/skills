@@ -49,15 +49,15 @@ Filter on the types that must wake the Coordinator: `worker_done`,
 `escalation`; manifest revisions arrive as `handoff`. Routine `status` and
 `heartbeat` messages do not need to wake it.
 
-A Delivery is a transaction:
+A mail batch is a transaction:
 
 1. read its complete batch;
 2. process every message, routing on `subject`;
 3. make retain/reuse/release decisions for settled Dispatches;
 4. reply or escalate where needed;
-5. acknowledge the Delivery once.
+5. acknowledge the mail batch once.
 
-Unacknowledged Deliveries replay by design. Parse complete JSON and select fields afterward instead of truncating raw JSON with `tail`.
+Unacknowledged mail batches replay by design. Parse complete JSON and select fields afterward instead of truncating raw JSON with `tail`.
 
 ## Worker contract
 
@@ -84,9 +84,9 @@ A completed review that requests changes uses `outcome=succeeded`. Its report na
 
 ## Follow-up ownership
 
-Alignment is the exception to the retained-context loop. After Main accepts a valid Alignment completion Delivery and determines that no immediate alignment follow-up is needed, it calls `worker-release` before acknowledging. Later requirement work starts a fresh Alignment Agent.
+Alignment is the exception to the retained-context loop. After Main accepts a valid Alignment completion mail batch and determines that no immediate alignment follow-up is needed, it calls `worker-release` before acknowledging. Later requirement work starts a fresh Alignment Agent.
 
-For delivery Workers and Reviewers, after `worker_done` the Coordinator accounts for the terminal before acknowledging the Delivery:
+For delivery Workers and Reviewers, after `worker_done` the Coordinator accounts for the terminal before acknowledging the mail batch:
 
 - `worker-retain` parks it for a likely fix/re-review cycle;
 - `worker-start --task <next> --terminal <handle>` reuses that retained session, taking the handle from `worker.agent_terminal_handle` in `worker-show --dispatch <id> --json` so Orca transfers cleanup ownership to the new Dispatch;
@@ -97,6 +97,13 @@ For delivery Workers and Reviewers, after `worker_done` the Coordinator accounts
 - `worker-stop` cancels a live supervised Worker, and `worker-abandon` fences one whose process cannot be proven stopped.
 
 Retained terminals are context caches. The worktree, commits, configured tracker ticket, and review artifact remain the durable source of truth, so replacement remains safe. `worker-list --run <run>` reports terminal accounting separately from Task status when ownership needs an audit.
+
+After tracker readback, release every retained supervised resource, verify each
+worktree is clean and has no live terminal, remove eligible Issue and
+conflict-only Integration Worktrees, and preserve Task/Dispatch rows, tracker
+comments, commits, and review artifacts. Use `terminal close` only for a terminal
+outside supervised ownership. Record any user-requested terminal or worktree
+retention in `wave_done`.
 
 ## Main and Coordinator
 
@@ -109,7 +116,7 @@ Main sends any approved answer or confirmed manifest revision to the
 Coordinator Run. Inner questions, status, heartbeat, Worker completion, and
 Reviewer completion stay inside the Coordinator Run.
 
-Main stays idle for chat and sweeps its Run with plain `check --json` at the start of turns while work is active. An injected "You have orchestration mail" prompt is only a wake notification; Main still calls `check` for the Delivery. Coordinator correctness relies on rolling `check --wait`, not on idle notification injection.
+Main stays idle for chat and sweeps its Run with plain `check --json` at the start of turns while work is active. An injected "You have orchestration mail" prompt is only a wake notification; Main still calls `check` for the mail batch. Coordinator correctness relies on rolling `check --wait`, not on idle notification injection.
 
 ## Manifest revision channel
 
@@ -121,7 +128,7 @@ For a permitted change to not-yet-launched work, Main:
 4. sends it to the Coordinator Run:
 
    ```text
-   orca orchestration send --to run:<coordinatorRun> --type handoff \
+   ORCA orchestration send --to run:<coordinatorRun> --type handoff \
      --subject manifest_revision --body <wave id + version + reason> \
      --report-path <new manifest path>
    ```

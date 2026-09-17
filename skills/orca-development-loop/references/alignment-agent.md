@@ -49,7 +49,7 @@ Before the first tracker operation:
 - read `docs/agents/issue-tracker.md` and load the exact guide/transport it
   names;
 - read `docs/agents/triage-labels.md` before classifying;
-- read complexity values and anchors from
+- read only project complexity values and anchors from the committed
   `docs/agents/agent-profiles.md`;
 - apply the Adapter's write eligibility gate before writes and use its
   documented operations and retry rule.
@@ -154,14 +154,13 @@ Before completion, account for every approved ticket:
 - executable tickets carry the AFK-ready canonical role;
 - executable tickets carry complexity or explicitly take the default;
 - unresolved tickets carry an appropriate non-ready role;
-- the delivery frontier is separate from role readiness;
-- frontier and `requiresBlockerAttestation` follow the
+- launchability and `requiresBlockerAttestation` follow the
   [blocker evidence contract](tracker-adapter.md#blocker-evidence-contract);
 - no duplicate was created for existing feedback.
 
 ## Completion report
 
-Send exactly one `worker_done` through the injected command. Its body contains:
+Send one `worker_done` through the injected lifecycle command with this body:
 
 ```json
 {
