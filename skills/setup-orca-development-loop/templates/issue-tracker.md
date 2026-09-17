@@ -15,6 +15,8 @@ integration:
 codeReview:
   provider: <provider id or none>
   scope: <repository/project or none>
+  createPullRequest: <exact command template or unsupported>
+  readPullRequest: <exact command template or unsupported>
 
 transport:
   type: <orca-native|provider-cli|custom-verified>
@@ -120,13 +122,19 @@ skill references.
 
 ## Completion readback
 
-After integration:
+After integration in `local-only` or `push-base` mode:
 
 1. post reviewed/integrated commit and validation evidence;
 2. apply the exact completed lifecycle value without regressing state;
 3. remove the AFK-ready role because completed work is no longer queueable;
-4. attach the review link when configured;
+4. attach review evidence when configured;
 5. read the ticket back and report the observed lifecycle and evidence.
+
+In `pull-request` mode, require the implementation-branch push and canonical
+PR/MR link readback, post that link and validation evidence, and leave the
+completed lifecycle unapplied. Leave classification untouched unless
+`docs/agents/triage-labels.md` maps `in-review`; when it does, apply that role
+and remove AFK-ready. Then read the ticket back and report `submitted`.
 
 Describe ancestor/spec sweeping only when parent reads are certified. Otherwise
 report the unsupported capability rather than guessing.

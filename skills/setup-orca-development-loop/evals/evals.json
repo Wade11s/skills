@@ -155,6 +155,32 @@
         "Marks Execution ready only if all required writes are covered",
         "Does not mark writes passed or exercise the declined probe"
       ]
+    },
+    {
+      "id": 13,
+      "prompt": "Configure publication for main. The provider's read-only branch metadata says main is protected, and the repository has a working PR CLI.",
+      "expected_output": "Warns that push-base may be rejected, recommends pull-request, resolves the exact remote and PR commands with read-only checks, and performs no publication.",
+      "files": [],
+      "expectations": [
+        "Offers local-only, push-base, and pull-request as the configured modes",
+        "Warns about push-base for the protected-looking branch and recommends pull-request",
+        "Records the exact remote name and PR-create and readback commands",
+        "Uses only read-only checks to verify the provider CLI, authentication, and repository scope",
+        "Does not push a branch or open a PR during setup"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Certify this custom-argv harness profile. The harness documents no command that reports its effective provider or model, but I confirm this exact argv.",
+      "expected_output": "Records user-attested effective-profile evidence with the exact argv, states the observability limitation, exercises the launch lifecycle, and allows certification to proceed.",
+      "files": [],
+      "expectations": [
+        "Uses effectiveProfileEvidence mode user-attested with command null",
+        "Stores the exact user-confirmed argv as structured values",
+        "Does not invent an attestation command or inspect process environments",
+        "Sets requestedEffectiveMatch to null while still exercising launch lifecycle and cleanup",
+        "Requires the provider/model limitation at every later profile confirmation"
+      ]
     }
   ]
 }

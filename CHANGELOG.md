@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-17
+
+- [Fix]: durable base advancement + serialize tickets with a main-advance lock, verify the durable checkout before a fast-forward merge, and use compare-and-swap only when the base ref is checked out nowhere.
+- [Add]: publication modes + freeze `local-only`, `push-base`, or `pull-request` authority in each Wave Manifest and report reviewed PR/MR submissions as `submitted`.
+- [Fix]: Wave Manifest revisions + add a confirmed `manifest_revision` handoff channel, safe-point validation, bounded revision scope, and per-ticket manifest-version reporting.
+- [Fix]: effective-profile evidence + use composed-launch receipts as normative evidence and degrade custom launches without a documented attestation command to explicit `user-attested` evidence.
+
 ## 2026-09-15
 
 - [Add]: `skills/setup-orca-development-loop/` + one explicit onboarding flow that replaces `setup-matt-pocock-skills` for Orca-loop repositories, selects and certifies an Orca-recognized primary tracker, resolves Matt-compatible project docs and validation, collects user-selected role profiles, and proves their launch recipes in disposable Orca probes.

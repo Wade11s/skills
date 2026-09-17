@@ -1,7 +1,10 @@
 # Wave Manifest Template
 
 ```yaml
-version: 3
+schemaVersion: 4
+version: <positive integer; start at 1>
+supersedes: <prior version or null>
+revisionReason: <reason or null>
 waveId: <stable human-readable wave id>
 objective: <one sentence>
 baseRef: <exact configured base ref>
@@ -71,6 +74,14 @@ profiles:
     launch:
       supervised: <frozen structured recipe or null>
       fullHandoff: <frozen structured recipe or null>
+    effectiveProfileEvidence:
+      # Omit a launch purpose not used by this profile.
+      supervised:
+        mode: <receipt|attestation|user-attested>
+        command: <exact read-only command or null>
+      fullHandoff:
+        mode: <attestation|user-attested>
+        command: <exact read-only command or null>
     certification:
       source: <setup|one-wave-override>
       supervised:
@@ -92,6 +103,12 @@ profiles:
 workspace:
   setupPolicy: <run|skip|inherit>
   setupCommand: <exact command|none>
+
+publication:
+  mode: <local-only|push-base|pull-request>
+  remote: <exact remote name or none>
+  pullRequestCreateCommand: <exact command template or none>
+  pullRequestReadbackCommand: <exact command template or none>
 
 validation:
   source: <docs/agents/environment.md plus fingerprint>
@@ -116,8 +133,21 @@ policies:
     escalationPrefersUnusedEntry: true
   integrationStaging: lazy-reuse-issue-worktree-after-clean-preflight
   integrationWorktree: conflict-only
-  pushRemote: false
 ```
+
+## Publication authority
+
+The frozen `publication.mode` is authority for exactly that behavior:
+
+- `local-only` advances the local base ref and pushes nothing;
+- `push-base` advances the local base ref, then fast-forward pushes that base to
+  `publication.remote` and reads the remote ref back;
+- `pull-request` leaves the local base ref unchanged, pushes the accepted
+  implementation branch to `publication.remote`, and runs the exact PR-create
+  command through the configured code-review surface.
+
+Force push, a different branch, or another remote requires separate explicit
+user authority.
 
 ## Blocker evidence
 
@@ -131,8 +161,9 @@ this template owns the frozen storage shape.
 `profiles` contains every profile this wave may launch, exactly once. Every ID
 under `roleBindings` and every ticket pin must resolve in that dictionary. The
 dictionary includes exact agent/model/reasoning, family, concurrency, fresh
-headroom, launch recipes, and certification facts even when an Integration
-profile is not in the ordinary Worker or Reviewer pool.
+headroom, launch recipes, `effectiveProfileEvidence`, and certification facts
+even when an Integration profile is not in the ordinary Worker or Reviewer
+pool.
 
 A ticket's Worker and Reviewer pins must also belong to the corresponding role
 binding; dictionary membership alone does not grant that role.
@@ -144,9 +175,21 @@ Coordinator requires `launch.fullHandoff`; supervised roles require
 definition invalidates the manifest before `run-create`.
 
 `pending-runtime-launch` is valid only for an explicit one-wave override and
-only on the purpose that role will use. Its actual launch receipt or attestation
-must match before that role performs work; failure does not authorize a
-substitute outside the confirmed dictionary.
+only on the purpose that role will use. A composed launch's
+`launch.effective` receipt is normative; a pre-created-terminal or full-handoff
+launch uses its recorded attestation command, or the exact user-confirmed argv
+in `user-attested` mode. Failure on observable evidence does not authorize a
+substitute outside the confirmed dictionary. Every confirmation names the
+independent-verification limitation of a `user-attested` profile.
+
+## Publication
+
+Copy `publication` from `docs/agents/environment.md` and show it at wave
+confirmation. The confirmed mode is authority for its exact remote and branch
+flow: `local-only` publishes nothing, `push-base` advances and pushes only the
+base ref, and `pull-request` pushes only accepted implementation branches and
+uses the frozen PR/MR commands. A force push, another branch, or another remote
+still requires explicit user authority.
 
 Copy tracker, workspace, validation, and selected profile facts from
 setup-certified documents, then add current blocker evidence, delivery order,
@@ -154,11 +197,23 @@ headroom, ticket pins, and user confirmation. Include only referenced profiles;
 the set of dictionary keys must equal the unique IDs referenced by role
 bindings and pins.
 
-A manifest is immutable. Changing its ticket set, blocker evidence, Adapter
-revision, write-risk acceptance, validation, profile dictionary/bindings, or policy creates a new
-version and requires confirmation. In-pool failover needs no new confirmation
-because every entry and its launch recipe are already frozen; record the
-substitution and provider error.
+`schemaVersion` identifies this template's shape; `version` counts the
+confirmed revisions of one wave. They change independently.
+
+A manifest version is immutable. The first confirmed file uses `version: 1`,
+`supersedes: null`, and `revisionReason: null`. A permitted revision increments
+`version`, names the prior version in `supersedes`, records a reason, preserves
+`waveId`, and requires confirmation. In-pool failover needs no revision because
+every entry and its launch recipe are already frozen; record the substitution
+and provider error.
+
+A revision may rebind roles or profiles, remove tickets, or refresh blocker
+evidence and delivery order only for not-yet-launched work. It may not add
+tickets or retroactively change validation commands or the Adapter revision for
+an integrated ticket. In-flight tickets finish under the version that launched
+them. A needed change to an in-flight ticket uses user abort, then a new wave.
+Follow the manifest-revision channel in the
+[Communication Contract](../references/communication-contract.md#manifest-revision-channel).
 
 Save the manifest beside the Coordinator handoff in the OS temporary directory
 and retain both paths in Main session state. Repository configuration is

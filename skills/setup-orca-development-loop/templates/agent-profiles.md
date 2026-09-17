@@ -70,6 +70,14 @@ hosts:
             # Use null when this profile is not bound to Coordinator.
             mode: precreated-terminal
             argv: [<exact argv entries>]
+        effectiveProfileEvidence:
+          # Omit a launch purpose not used by this profile.
+          supervised:
+            mode: <receipt|attestation|user-attested>
+            command: <exact read-only command or null>
+          fullHandoff:
+            mode: <attestation|user-attested>
+            command: <exact read-only command or null>
         verification:
           authProbe: <ready|not-ready|inconclusive>
           smokeTest: <passed|failed|not-run>
@@ -106,6 +114,13 @@ entries the wave will launch:
 Every role-binding ID resolves in the same host's `profiles` map. Integration
 bindings may point at dedicated profiles outside the ordinary pools, but those
 definitions must still be complete and certified for supervised launch.
+
+Use `receipt` only for a composed `worker-start --agent --model --effort`
+launch; its start receipt's `launch.effective` is normative, so `command` is
+`null`. A pre-created-terminal or full-handoff recipe uses one
+harness-documented read-only `attestation` command. When none exists, use
+`user-attested`, set `command` to `null`, retain the exact user-confirmed
+`argv`, and surface that limitation whenever the profile is confirmed.
 
 If a configured entry fails, use another already confirmed pool entry. A
 profile outside the pool is a one-wave user-confirmed override or requires

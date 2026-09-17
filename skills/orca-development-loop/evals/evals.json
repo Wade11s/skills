@@ -197,11 +197,12 @@
     {
       "id": 16,
       "prompt": "You are the newly launched Alignment Agent. Main supplied complete feedback. Begin.",
-      "expected_output": "Runs the certified profile probe first, then responds with attestation, feedback summary, and one exact slash command before broad exploration.",
+      "expected_output": "Applies the frozen effective-profile evidence, then responds with its values or limitation, a feedback summary, and one exact slash command before broad exploration.",
       "files": [],
       "expectations": [
-        "First action is the configured runtime attestation",
-        "First visible response includes effective profile",
+        "Runs the configured read-only command only in attestation mode",
+        "Runs no profile probe in receipt or user-attested mode",
+        "First visible response includes the evidence mode and profile values or limitation",
         "Summarizes all received feedback",
         "Recommends exactly one slash skill",
         "Does no broad repository or tracker exploration first"
@@ -317,6 +318,58 @@
         "Does not retry a new create after an ambiguous result",
         "Stops further writes if ambiguity remains",
         "Does not promote whole-Adapter certification after one successful operation"
+      ]
+    },
+    {
+      "id": 26,
+      "prompt": "You are the Coordinator. ITEM-140 has an accepted, validated candidate, but the durable main checkout has modified files and main is checked out there. Advance the base.",
+      "expected_output": "Keeps the candidate and review evidence, refuses to mutate user state, escalates with exact blocking paths, and leaves the ticket blocked.",
+      "files": [],
+      "expectations": [
+        "Acquires the main-advance lock and re-reads the base SHA",
+        "Runs git --no-optional-locks status --porcelain in the durable checkout",
+        "Does not stash, reset, check out over, or update-ref around a checked-out base",
+        "Names the exact dirty paths in a user-level escalation",
+        "Preserves the candidate and accepted review evidence and reports blocked"
+      ]
+    },
+    {
+      "id": 27,
+      "prompt": "ITEM-141 passed review and combined-state validation. The confirmed publication mode is pull-request with remote origin and a frozen PR-create command.",
+      "expected_output": "Leaves local main unchanged, pushes the accepted implementation branch without force, opens and reads back the PR, updates the ticket without completing it, and reports submitted.",
+      "files": [],
+      "expectations": [
+        "Does not advance the local base ref",
+        "Treats the confirmed publication mode as push authority for only the configured branch and remote",
+        "Pushes the accepted implementation branch without force and reads back the canonical PR link",
+        "Posts the PR link and validation evidence and does not apply completed lifecycle",
+        "Leaves classification untouched unless in-review is mapped; when mapped, applies it and removes AFK-ready before reporting submitted"
+      ]
+    },
+    {
+      "id": 28,
+      "prompt": "Wave W is running under manifest version 2. Main proposes version 3, but it changes the Worker profile for ITEM-142, whose Dispatch is live.",
+      "expected_output": "Rejects the revision at the safe-point gate, continues version 2, and directs the change through abort followed by a new wave.",
+      "files": [],
+      "expectations": [
+        "Requires manifest_revision as a handoff with report-path and explicit user confirmation",
+        "Detects that a touched ticket has a live Dispatch",
+        "Sends manifest_rejected as an escalation naming that check",
+        "Continues under version 2",
+        "Uses user abort then a new wave instead of retroactively changing the in-flight ticket"
+      ]
+    },
+    {
+      "id": 29,
+      "prompt": "Launch the configured Alignment profile with worker-start --agent --model --effort. The start receipt is the only effective-profile evidence.",
+      "expected_output": "Treats launch.effective from the start receipt as normative, verifies it against launch.requested, and runs no in-Task profile probe.",
+      "files": [],
+      "expectations": [
+        "Uses effectiveProfileEvidence mode receipt with command null",
+        "Compares launch.requested and launch.effective",
+        "Does not require a harness-native attestation command",
+        "Inlines the receipt-verified profile for the Alignment Agent",
+        "The Alignment Agent performs no second profile probe"
       ]
     }
   ]

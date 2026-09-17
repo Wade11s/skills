@@ -64,7 +64,7 @@ Load the remaining documents only when their facts are needed:
 | Normalized tracker operations and retry rules | `docs/agents/issue-tracker.md` |
 | Canonical role to tracker-value mapping | `docs/agents/triage-labels.md` |
 | Domain and ADR layout | `docs/agents/domain.md` |
-| Worktree setup and validation tiers | `docs/agents/environment.md` |
+| Worktree setup, validation tiers, and publication | `docs/agents/environment.md` |
 | Complexity policy, role bindings, launch recipes | `docs/agents/agent-profiles.md` |
 
 Read [Tracker Adapter](references/tracker-adapter.md) before the first tracker
@@ -135,12 +135,14 @@ Require Alignment readiness, then read
    exists. Do not enumerate agents or recommend a new long-lived model.
 4. Show the exact configured profile and wait for explicit confirmation. A
    newly supplied profile is a one-wave override and receives the same bounded
-   validation; it is not persisted here.
+   validation; it is not persisted here. If its evidence is `user-attested`,
+   state that exact argv is confirmed but provider/model cannot be
+   independently observed.
 5. Inline the confirmation and certified launch recipe in the Alignment Task.
 6. Create the supervised Task before launching or attaching the fresh Alignment
    terminal.
-7. Verify the launch receipt or harness-native attestation before asking the
-   user to switch.
+7. Apply the configured receipt, attestation, or user-attested evidence rule
+   before asking the user to switch.
 
 The state transition is:
 
@@ -184,17 +186,24 @@ Run the **Execution Gate** before generating a handoff:
 7. Read exact worktree setup and validation commands from
    `docs/agents/environment.md`. Missing or fake commands are setup drift, not
    an invitation to guess.
-8. Resolve ticket complexity from the configured representation and default.
-9. Read the current host's certified role bindings and launch recipes. Cheaply
-   revalidate only entries the wave may use, then read headroom fresh.
-10. Propose exact Coordinator, Worker, Reviewer, Integration Worker, and
-   Integration Reviewer assignments or pools. Worker and Reviewer families
-   differ unless the stored policy records the user's exception.
-11. State `maxParallelTickets`, each entry's `maxConcurrent`, current headroom,
-   and the resulting maximum concurrent Dispatch count.
-12. Wait for explicit user confirmation, then freeze tickets, blocker evidence,
-    delivery order, tracker Adapter revision, validation, policy, role
-    bindings, and a self-contained definition for every referenced profile in the
+8. Read the configured publication mode and exact remote or `none` from
+   `docs/agents/environment.md`, and for `pull-request` the exact PR/MR create
+   and readback commands from the code-review surface in
+   `docs/agents/issue-tracker.md`.
+9. Resolve ticket complexity from the configured representation and default.
+10. Read the current host's certified role bindings and launch recipes. Cheaply
+    revalidate only entries the wave may use, then read headroom fresh.
+11. Propose exact Coordinator, Worker, Reviewer, Integration Worker, and
+    Integration Reviewer assignments or pools. Worker and Reviewer families
+    differ unless the stored policy records the user's exception.
+12. State `maxParallelTickets`, each entry's `maxConcurrent`, current headroom,
+    the resulting maximum concurrent Dispatch count, and every
+    `user-attested` profile limitation.
+13. Show the publication mode and exact authorized remote/branch flow.
+14. Wait for explicit user confirmation, then freeze tickets, blocker evidence,
+    delivery order, tracker Adapter revision, validation, publication, policy,
+    role bindings, and a self-contained definition including
+    `effectiveProfileEvidence` for every referenced profile in the
     [Wave Manifest](templates/wave-manifest.md).
 
 The state transition is:
@@ -210,10 +219,22 @@ TICKETS_READY
   -> EXECUTION_ACTIVE
 ```
 
-A ticket set, blocker evidence, delivery order, Adapter, validation, or profile
-change invalidates confirmation. An in-pool failover does not; every pool entry
-and launch recipe is frozen in the manifest. A profile outside its role binding
-requires a revised manifest and confirmation.
+A ticket set, blocker evidence, delivery order, Adapter, validation,
+publication, or profile change invalidates confirmation. An in-pool failover
+does not; every pool entry and launch recipe is frozen in the manifest. Before
+Coordinator startup, render a fresh confirmed manifest. During an active wave,
+use the revision channel below for permitted not-yet-launched changes.
+
+## Revise an active Wave Manifest
+
+Read the
+[manifest revision channel](references/communication-contract.md#manifest-revision-channel).
+Main renders version N+1 for the same wave, gets explicit user confirmation,
+saves it beside version N, and sends `manifest_revision` to the Coordinator Run
+with the new file as `--report-path`. Main does not treat the revision as active
+until the Coordinator returns `manifest_accepted`; `manifest_rejected` leaves
+version N active. A revision reaches only not-yet-launched work, and a needed
+change to an in-flight ticket uses user abort, then a new wave.
 
 ## Generate the Coordinator handoff
 
@@ -251,7 +272,8 @@ While Alignment or Execution is active:
 - process every message in the complete FIFO Delivery, perform required
   ownership actions, then acknowledge once;
 - accept only bounded Alignment completion, Coordinator readiness,
-  escalation/profile mismatch, and wave completion messages.
+  escalation/profile mismatch, `manifest_accepted`, `manifest_rejected`, and
+  wave completion messages.
 
 Inner Worker, Reviewer, heartbeat, and fix-pass messages belong to the
 Coordinator Run. Follow the stall ladder instead of waiting indefinitely.
@@ -259,10 +281,11 @@ Coordinator Run. Follow the stall ladder instead of waiting indefinitely.
 ## Completion
 
 A wave is complete only when `wave_done` accounts for every ticket as
-`integrated`, `blocked`, or `abandoned`, including reviewed/integrated commits,
-post-integration validation, tracker readback, supported ancestor sweeps,
-settled Dispatches, terminal/worktree disposition, Adapter evidence, and
-residual risks.
+`integrated`, `submitted`, `blocked`, or `abandoned`, including its
+`manifestVersion`, reviewed/integrated commits or submitted PR/MR, main-advance
+evidence when applicable, post-integration validation, tracker readback,
+supported ancestor sweeps, settled Dispatches, terminal/worktree disposition,
+Adapter evidence, and residual risks.
 
 After accepting it, close the top-level Coordinator terminal by its stored
 handle, then acknowledge the complete Main Run Delivery. `worker-release` does

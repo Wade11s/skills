@@ -12,14 +12,22 @@ Task/Dispatch lifecycle until completion.
 The injected Initial Request is a complete handoff from Main. Treat it as
 already received from the user.
 
-Your first action is the certified harness-native profile probe named by the
-Task. Compare it with the confirmed profile. On mismatch, escalate and stop
-without requirement or tracker work.
+Read the Task's `effectiveProfileEvidence`:
 
-After a match, your first human-facing response happens before broad repository
-or tracker exploration:
+- `receipt`: Main already compared the composed start receipt's
+  `launch.requested` and `launch.effective` and inlined the verified values. Run
+  no profile probe.
+- `attestation`: first run the one recorded read-only command and compare it
+  with the confirmed profile. On mismatch, escalate and stop before requirement
+  or tracker work.
+- `user-attested`: run no profile probe. Use the exact user-confirmed argv and
+  state that provider/model cannot be independently observed.
 
-1. show the exact verified harness/model/reasoning attestation;
+Then make your first human-facing response before broad repository or tracker
+exploration:
+
+1. show the evidence mode and exact receipt-verified, attested, or
+   user-attested harness/model/reasoning values;
 2. confirm that the feedback arrived;
 3. summarize every received decision, bug, and uncertainty;
 4. recommend exactly one narrow user-invoked alignment skill;
@@ -75,7 +83,9 @@ the area is already documented or the exploration is throwaway.
 ## First-response shape
 
 ```text
-Alignment profile verified: <harness> / <provider/model> / <reasoning>
+Alignment profile evidence (<receipt|attestation|user-attested>):
+<harness> / <provider/model> / <reasoning>
+<user-attested limitation when applicable>
 
 I received the complete feedback from Main:
 

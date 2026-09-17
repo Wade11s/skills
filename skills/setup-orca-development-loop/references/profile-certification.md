@@ -48,7 +48,13 @@ candidates:
    probe is inconclusive;
 5. family is known;
 6. role bindings contain at least one valid Worker/Reviewer family pair;
-7. launch preferences fit either the composed or custom-argv path.
+7. launch preferences fit either the composed or custom-argv path;
+8. each launch purpose has one effective-profile evidence mode:
+   - `receipt` for a composed launch;
+   - `attestation` with one harness-documented read-only command for a
+     pre-created-terminal or custom-argv launch;
+   - `user-attested` with the exact user-confirmed argv when no such command
+     exists.
 
 Prefer a documented non-refreshing auth check. Do not start an interactive
 login flow or create credentials on the user's behalf.
@@ -58,19 +64,34 @@ first Orca launch remains the decisive test. Do not silently substitute another
 profile. A smoke call spends quota, so disclose it and obtain consent before
 calling the model; otherwise defer the decision to the consented launch probe.
 
+For Pi custom-argv launches, this is the worked example of a documented
+read-only `attestation` command:
+
+```bash
+printf 'PROFILE=%s/%s:%s\n' "$PI_PROVIDER" "$PI_MODEL" "$PI_REASONING_LEVEL"
+```
+
+Do not generalize that command to another harness. When its harness documents
+no equivalent, record `user-attested` evidence with `command: null`, retain the
+exact confirmed argv, and state that provider/model cannot be independently
+observed. That limitation does not make certification impossible.
+
 ## Probe Run
 
 Explain the quota and Orca-resource side effects, then wait for consent. Create
 one dedicated Run and preferably one disposable top-level worktree. Deduplicate
 profiles across roles and certify each unique profile once per launch purpose.
 
-The no-edit probe Task must:
+Every no-edit probe Task must:
 
-- attest harness/model/reasoning through a safe harness-native mechanism;
 - confirm it received the injected lifecycle preamble;
 - avoid product-file reads and writes;
 - send exactly one successful `worker_done`;
 - end the turn and idle.
+
+An `attestation` Task also runs its one recorded command and compares the
+observed harness/model/reasoning. A `receipt` or `user-attested` Task performs no
+in-Task profile probe.
 
 Before either supervised launch path, create the complete probe Task with
 `orca orchestration task-create --spec` using the version-matched guide.
@@ -84,7 +105,9 @@ orca orchestration worker-start --task <probe-task> --worktree <probe-worktree> 
 ```
 
 Omit `--model` and `--effort` only when the user explicitly selected the
-agent's configured default. Compare `launch.requested` with `launch.effective`.
+agent's configured default. The start receipt's `launch.effective` is normative
+and sufficient: compare it with `launch.requested`, and do not ask the probe
+Task to attest the profile again.
 
 For custom argv:
 
@@ -96,8 +119,10 @@ orca orchestration worker-start --task <probe-task> \
 ```
 
 Use argv fields in stored configuration; do not persist an interpolated shell
-command. The Task's harness-native attestation is the effective-profile
-evidence.
+command. A pre-created-terminal receipt cannot prove provider/model. Run the one
+recorded read-only command in `attestation` mode. In `user-attested` mode, run
+no substitute probe; compare the launched argv with the exact user-confirmed
+argv and carry the independent-verification limitation.
 
 ## Coordinator handoff probe
 
@@ -106,8 +131,9 @@ through its real launch shape:
 
 1. create a fresh terminal in the disposable worktree with the exact argv;
 2. wait for `tui-idle`;
-3. send one no-work attestation-and-exit prompt;
-4. verify the effective profile from one bounded response;
+3. send one no-work prompt that runs the recorded attestation command, or states
+   the `user-attested` limitation when no command exists;
+4. verify one bounded response against the command output or confirmed argv;
 5. wait boundedly for exit and close the resulting unsupervised terminal tab.
 
 The prompt forbids creating a Run, Task, worker, or product edit. A supervised
@@ -119,6 +145,10 @@ Each profile records certification separately for every launch purpose it
 serves. A supervised result does not certify a Coordinator full handoff:
 
 ```yaml
+effectiveProfileEvidence:
+  supervised:
+    mode: <receipt|attestation|user-attested>
+    command: <exact read-only command or null>
 certification:
   supervised:
     status: passed
@@ -136,6 +166,13 @@ certification:
     requestedEffectiveMatch: <true|null>
     repositoryUnchanged: <true|null>
 ```
+
+Store one `effectiveProfileEvidence` entry for each launch purpose. `receipt`
+requires `command: null`; `attestation` requires its exact command;
+`user-attested` requires `command: null` and exact confirmed argv. Set
+`requestedEffectiveMatch: null` when evidence is `user-attested`, because the
+launch path was exercised but provider/model was not independently observable.
+Repeat that limitation at every later confirmation that uses the profile.
 
 After accepting each `worker_done`, release its supervised resource before
 acknowledging the Delivery. Close only unsupervised terminals with terminal

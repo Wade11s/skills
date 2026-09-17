@@ -24,6 +24,7 @@ Every wave ticket ends in exactly one state, and `wave_done` reports it:
 | State | Meaning | Required handling |
 |---|---|---|
 | `integrated` | reviewed, merged, tracker completion applied and read back | normal cleanup |
+| `submitted` | reviewed, validated, implementation branch pushed, PR/MR link read back, and published for human merge | post link and validation evidence; leave completed lifecycle unapplied; leave classification unchanged unless optional `in-review` is mapped, then apply it and remove AFK-ready; normal cleanup |
 | `blocked` | cannot proceed without a decision or an unmet dependency | escalate to Main with evidence; preserve commits, branch, worktree, and review artifacts |
 | `abandoned` | the user stopped it, or repair attempts were exhausted | preserve the same artifacts and name the reason |
 
@@ -39,14 +40,25 @@ ticket blocked; a user-provided delivery order cannot override either case.
 
 ## User abort
 
-When the user asks to stop an active wave:
+When the user asks to stop an active ticket or the whole wave:
 
-1. Main sends the stop instruction to the Coordinator Run and waits for acknowledgement. This is the explicit-wait case for `check --wait`.
-2. The Coordinator stops live Dispatches with `worker-stop`, or `worker-abandon` where a process cannot be proven stopped, and leaves committed work in place.
-3. Main stays unchanged. An in-flight integration candidate is discarded rather than advanced.
-4. The configured tracker keeps its current lifecycle state: unfinished tickets get no completion comment or classification write, only a report of where they stopped.
-5. The Coordinator sends `wave_done` with each affected ticket `abandoned`, the reason `user abort`, and the retained worktrees and terminals that would let the work resume.
-6. Main closes the Coordinator terminal and reports the stopping point to the user.
+1. Main sends the exact ticket or wave scope to the Coordinator Run and waits
+   for acknowledgement. This is the explicit-wait case for `check --wait`.
+2. The Coordinator stops affected live Dispatches with `worker-stop`, or
+   `worker-abandon` where a process cannot be proven stopped, and leaves
+   committed work in place.
+3. Main stays unchanged for affected work. An in-flight integration candidate
+   is discarded rather than advanced.
+4. The configured tracker keeps its current lifecycle state: unfinished tickets
+   get no completion comment or classification write, only a report of where
+   they stopped.
+5. Record each affected ticket as `abandoned` with reason `user abort` and the
+   retained worktrees and terminals that would let it resume. A ticket-scoped
+   abort leaves unrelated tickets running and appears in the eventual
+   `wave_done`; a wave-scoped abort sends `wave_done` immediately after every
+   affected Dispatch settles.
+6. Main closes the Coordinator terminal only for a wave-scoped abort and
+   reports the stopping point to the user.
 
 ## Resume
 

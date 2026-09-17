@@ -23,6 +23,9 @@ Orca accepts a fixed `--type` enum: `status`, `dispatch`, `worker_done`, `merge_
 |---|---|---|
 | Coordinator ready | Coordinator to Main Run | `send --to run:<mainRun> --type status --subject coordinator_ready --phase coordinator_ready --body <run id + manifest version>` |
 | Profile mismatch | any role to its owning Run | `send --to run:<owner> --type escalation --subject profile_mismatch --body <expected vs actual>` |
+| Manifest revision | Main to Coordinator Run | `send --to run:<coordinatorRun> --type handoff --subject manifest_revision --report-path <new manifest path> --body <wave id + version + reason>` |
+| Manifest revision accepted | Coordinator to Main Run | `send --to run:<mainRun> --type status --subject manifest_accepted --body <wave id + accepted version>` |
+| Manifest revision rejected | Coordinator to Main Run | `send --to run:<mainRun> --type escalation --subject manifest_rejected --body <exact failing check + retained version>` |
 | User-level escalation | Coordinator to Main Run | `send --to run:<mainRun> --type escalation --subject "escalation: <topic>" --body <decision needed>` |
 | Wave completion | Coordinator to Main Run | `send --to run:<mainRun> --type handoff --subject wave_done --body <bounded report>` plus `--report-path` when a durable artifact exists |
 | Implementation or review completion | Worker or Reviewer to owning Run | the injected envelope: `send --type worker_done --subject <status> --outcome succeeded\|failed --task-id <id> --dispatch-id <id> --files-modified <csv>` |
@@ -41,7 +44,10 @@ When a send fails with `invalid_argument`, take the valid flag set from that err
 
 `check --wait` first reads the inbox, then blocks only when no matching message exists. A matching message wakes it immediately; the timeout is only the maximum empty window.
 
-Filter on the types that must wake the Coordinator: `worker_done`, `escalation`, and `question`. Profile mismatches arrive as `escalation`, so that filter already catches them. Routine `status` and `heartbeat` messages do not need to wake it.
+Filter on the types that must wake the Coordinator: `worker_done`,
+`escalation`, `question`, and `handoff`. Profile mismatches arrive as
+`escalation`; manifest revisions arrive as `handoff`. Routine `status` and
+`heartbeat` messages do not need to wake it.
 
 A Delivery is a transaction:
 
@@ -94,12 +100,51 @@ Retained terminals are context caches. The worktree, commits, configured tracker
 
 ## Main and Coordinator
 
-The top-level Coordinator is not a Main Run Dispatch. It creates its own Run and sends the four bounded upstream signals from the table above: coordinator ready, profile mismatch, user-level escalation, and wave completion.
+The top-level Coordinator is not a Main Run Dispatch. It creates its own Run and
+sends only the bounded upstream subjects from the table: `coordinator_ready`,
+`profile_mismatch`, `manifest_accepted`, `manifest_rejected`, user-level
+escalation, and `wave_done`.
 
-Main sends any approved answer to the Coordinator Run. Inner questions, status, heartbeat, Worker completion, and Reviewer completion stay inside the Coordinator Run.
+Main sends any approved answer or confirmed manifest revision to the
+Coordinator Run. Inner questions, status, heartbeat, Worker completion, and
+Reviewer completion stay inside the Coordinator Run.
 
 Main stays idle for chat and sweeps its Run with plain `check --json` at the start of turns while work is active. An injected "You have orchestration mail" prompt is only a wake notification; Main still calls `check` for the Delivery. Coordinator correctness relies on rolling `check --wait`, not on idle notification injection.
 
+## Manifest revision channel
+
+For a permitted change to not-yet-launched work, Main:
+
+1. renders version N+1 with the same `waveId`, `supersedes: N`, and a reason;
+2. gets explicit user confirmation;
+3. saves the immutable new file beside the original;
+4. sends it to the Coordinator Run:
+
+   ```text
+   orca orchestration send --to run:<coordinatorRun> --type handoff \
+     --subject manifest_revision --body <wave id + version + reason> \
+     --report-path <new manifest path>
+   ```
+
+The Coordinator applies it only between ticket dispatches, with no live
+Dispatch for a touched ticket. It re-runs its startup checks for profile
+dictionary resolution, launch purposes, blocker evidence, Adapter revision, and
+write eligibility. It replies with `manifest_accepted`, or sends
+`manifest_rejected` naming the exact failing check and continues under version
+N.
+
+A revision may rebind roles or profiles, remove tickets, or refresh blocker
+evidence and delivery order only for not-yet-launched work. It may not add
+tickets or retroactively change validation commands or the Adapter revision for
+already-integrated tickets. In-flight tickets finish under their launch
+version, which `wave_done` records per ticket. A needed change to an in-flight
+ticket uses the user-abort flow, then a new wave.
+
 ## Profile mismatch
 
-Every launch receipt must prove requested and effective role profiles match. On mismatch, the launched role performs no work: it reports expected and actual harness/model/reasoning settings to the owning Run under the `profile_mismatch` subject and waits for a revised, user-confirmed Wave Manifest.
+For `receipt` or `attestation` evidence, an observable mismatch stops work: the
+launched role reports expected and actual harness/model/reasoning settings to
+the owning Run under `profile_mismatch`. Main uses the manifest-revision channel
+for not-yet-launched replacement work. `user-attested` evidence has no
+independent provider/model observation to mismatch; every confirmation carries
+that limitation instead.

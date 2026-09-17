@@ -13,7 +13,7 @@ Before `run-create`:
 
 1. Read the handoff and immutable Wave Manifest. It is authoritative for the
    Tracker Adapter revision, role profiles, validation commands, worktree setup,
-   and parallel limit.
+   publication mode, and parallel limit.
 2. Read root repository instructions and
    `docs/agents/orca-development-loop.md`.
 3. Read `docs/agents/issue-tracker.md` and
@@ -27,9 +27,10 @@ Before `run-create`:
    definition invalidates the manifest; never fill it from mutable repository
    profile configuration. Each pin also belongs to its corresponding role
    binding.
-6. Inspect your actual harness/model/reasoning and compare it with the
-   Coordinator definition resolved from `roleBindings.coordinator` and its
-   frozen full-handoff recipe.
+6. Apply the Coordinator recipe's frozen `effectiveProfileEvidence`. Run its
+   one read-only command in `attestation` mode. In `user-attested` mode, compare
+   the launched argv with the exact confirmed argv and carry the stated
+   provider/model observability limitation.
 
 On configuration or Adapter mismatch, report setup drift to Main and idle. On
 profile mismatch, send `profile_mismatch` with expected and actual values,
@@ -53,11 +54,52 @@ Coordinator Run ID, accepted manifest version, and Adapter revision. Follow the
    accepted, integrated, and read back.
 8. Apply the environment's configured setup policy to fresh worktrees.
 9. Verify every fresh agent's effective profile against its frozen recipe.
-   Setup-certified entries must match their certification; a
-   `pending-runtime-launch` one-wave override must match before doing work.
+   A composed launch uses the start receipt's `launch.effective` with no
+   in-Task probe. A pre-created-terminal launch uses its recorded attestation
+   command or exact `user-attested` argv. Setup-certified entries must match
+   their certification; a `pending-runtime-launch` one-wave override must match
+   before doing work.
 
 Changing a tracker Adapter, validation command, agent/model/reasoning, or
 out-of-pool profile requires a revised user-confirmed manifest.
+
+## Manifest revisions
+
+Main sends a confirmed revision as `--type handoff --subject
+manifest_revision` with `--report-path` naming the new file. Apply it only at a
+safe point between ticket dispatches, with no live Dispatch for any ticket the
+revision touches.
+
+Before acceptance:
+
+1. require the same `waveId`, `version: N+1`, `supersedes: N`, a reason, and
+   explicit user confirmation;
+2. reject added tickets, changes to already-integrated ticket validation or
+   Adapter revision, and changes outside not-yet-launched work;
+3. re-run the startup validation for the frozen profile dictionary, role launch
+   purposes, blocker evidence, Adapter revision, and write eligibility;
+4. require every touched ticket to have no live Dispatch.
+
+On success, adopt the new file for not-yet-launched work and send:
+
+```text
+orca orchestration send --to run:<mainRun> --type status \
+  --subject manifest_accepted --body <wave id + accepted version>
+```
+
+On failure, keep version N active and send:
+
+```text
+orca orchestration send --to run:<mainRun> --type escalation \
+  --subject manifest_rejected --body <exact failing check + retained version>
+```
+
+A revision may rebind roles or profiles, remove tickets, or refresh blocker
+evidence and delivery order only for not-yet-launched work. In-flight tickets
+finish under the version that launched them. When the needed change touches an
+in-flight ticket, use the existing user-abort flow for that ticket, then place
+the changed ticket in a new wave. Record every ticket's launch
+`manifestVersion` in `wave_done`.
 
 ## Assign profiles
 
@@ -93,8 +135,9 @@ At each ticket start:
     manifest and keep the Integration Reviewer in a different family from the
     profile that produced that state.
 
-No out-of-pool model is an automatic fallback. Report the need to Main and wait
-for a revised manifest.
+No out-of-pool model is an automatic fallback. Report the need to Main and use
+the manifest-revision channel in the Communication Contract; continue under the
+accepted version until Main supplies a valid replacement.
 
 Read [Issue Worktree Loop](issue-worktree-loop.md) before implementation. Render
 Tasks from templates rather than asking each agent to rediscover contracts.
@@ -104,7 +147,7 @@ Tasks from templates rather than asking each agent to rediscover contracts.
 Use the Coordinator Run as the inner control plane:
 
 ```text
-check --wait --types worker_done,escalation,question --timeout-ms 900000 --json
+check --wait --types worker_done,escalation,question,handoff --timeout-ms 900000 --json
 ```
 
 A shorter window is valid only when the harness imposes a smaller timeout.
@@ -112,7 +155,8 @@ A shorter window is valid only when the harness imposes a smaller timeout.
 For each FIFO Delivery:
 
 1. process every message, routing on `subject`;
-2. answer a question or escalate a product-level decision to Main;
+2. answer a question, process `manifest_revision` only at its safe point, or
+   escalate a product-level decision to Main;
 3. treat heartbeat/status as liveness, never completion;
 4. validate each `worker_done` against the active Dispatch;
 5. decide retain, reuse, or release before acknowledging;
@@ -159,7 +203,8 @@ mutation owner, and return or remove ownership afterward.
 3. For divergent but conflict-free history, preserve accepted evidence,
    materialize the deterministic mechanical merge candidate in the Issue
    Worktree with current main as first parent, and validate the combined state.
-4. Advance main only after green evidence, unchanged main, and tree equivalence.
+4. Follow the authoritative
+   [main-advance and publication procedure](issue-worktree-loop.md#main-advance-and-publication).
 5. If conflict-free combined-state validation fails, keep main unchanged and
    dispatch an Integration Worker plus fresh Integration Reviewer in the Issue
    Worktree.
@@ -173,13 +218,21 @@ head in the appropriate checkout class.
 
 ## Tracker completion and cleanup
 
-After main advances, use the Adapter's completion operation:
+For `local-only` and `push-base`, after main advances, use the Adapter's
+completion operation:
 
 1. publish the reviewed/integrated commit and validation evidence;
 2. set the exact completed lifecycle without regressing state;
 3. remove the AFK-ready role;
-4. attach PR/MR evidence when configured;
+4. attach review evidence when configured;
 5. read the ticket back and record observed state.
+
+For `pull-request`, leave local main unchanged. Require implementation-branch
+push, PR/MR creation, and canonical-link readback before cleanup. Post that link
+and validation evidence through the Adapter and leave the completed lifecycle
+unapplied. Leave classification untouched unless the optional `in-review`
+mapping exists; when it does, apply `in-review` and remove AFK-ready. Read the
+ticket back as `submitted`.
 
 Sweep ancestors only when parent reads are certified. Close one only when all
 children are complete and its scope is exhausted; otherwise leave it open and
@@ -198,8 +251,8 @@ resource, and `terminal close` only outside supervised ownership.
 
 ## Return to Main
 
-Send only `coordinator_ready`, `profile_mismatch`, a user-level `escalation`,
-and `wave_done`.
+Send only `coordinator_ready`, `profile_mismatch`, `manifest_accepted`,
+`manifest_rejected`, a user-level `escalation`, and `wave_done`.
 
 `wave_done` is valid only after every expected inner Dispatch is settled:
 
@@ -210,10 +263,12 @@ and `wave_done`.
   "manifestVersion": 3,
   "coordinatorRunId": "<run id>",
   "tracker": {"provider": "<provider>", "adapterRevision": "<revision>"},
+  "publication": {"mode": "<local-only|push-base|pull-request>", "remote": "<name or none>"},
   "tickets": [
     {
       "ref": "<ticket-ref>",
       "outcome": "integrated",
+      "manifestVersion": 2,
       "complexity": "simple",
       "assigned": {
         "worker": "w1",
@@ -223,11 +278,26 @@ and `wave_done`.
       },
       "reviewedHead": "<sha>",
       "integratedCommit": "<sha>",
+      "mainAdvance": {"from": "<sha>", "to": "<sha>", "method": "ff-merge|update-ref"},
+      "remoteRef": "<verified remote ref or null>",
       "trackerState": "<completed value>"
     },
     {
       "ref": "<ticket-ref>",
+      "outcome": "submitted",
+      "manifestVersion": 3,
+      "complexity": "standard",
+      "assigned": {"worker": "w1", "reviewer": "r2"},
+      "reviewedHead": "<sha>",
+      "validatedCandidate": "<sha>",
+      "publishedBranch": "<remote>/<branch>",
+      "codeReviewUrl": "<canonical PR/MR URL>",
+      "trackerState": "<observed non-completed value>"
+    },
+    {
+      "ref": "<ticket-ref>",
       "outcome": "blocked",
+      "manifestVersion": 3,
       "complexity": "complex",
       "assigned": {"worker": "w2", "reviewer": "r1"},
       "reason": "<blocker>",
@@ -238,10 +308,14 @@ and `wave_done`.
   "sweptAncestors": [{"ref": "<ticket-ref>", "outcome": "closed"}],
   "terminals": {"released": ["<handle>"], "retained": []},
   "worktrees": {"removed": ["<selector>"], "retained": []},
+  "mainAdvanceSerialization": {
+    "serialFallbackAfterTwoLosses": false,
+    "triggerTicket": "<ticket-ref or null>"
+  },
   "residualRisks": []
 }
 ```
 
-Every ticket outcome is `integrated`, `blocked`, or `abandoned`, with a reason
-for the latter two. After sending, end the turn and idle; Main closes the
-top-level terminal.
+Every ticket outcome is `integrated`, `submitted`, `blocked`, or `abandoned`,
+with a reason for the latter two. After sending, end the turn and idle; Main
+closes the top-level terminal.

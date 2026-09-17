@@ -76,7 +76,11 @@ After the manifest's `maxIncrementalReReviews` focused cycles, or whenever the f
 
 ## Integration gate
 
-After final `ACCEPT`, retain the Worker and Reviewer until the accepted state is integrated and all final checks pass. Use **lazy integration**: preflight first, reuse the Issue Worktree for a clean candidate, and allocate a dedicated Integration Worktree only for content conflicts. The durable main checkout stays unchanged until validation passes.
+After final `ACCEPT`, retain the Worker and Reviewer until the accepted state is
+integrated or submitted under the frozen publication mode and all final checks
+pass. Use **lazy integration**: preflight first, reuse the Issue Worktree for a
+clean candidate, and allocate a dedicated Integration Worktree only for content
+conflicts. The durable main checkout stays unchanged until validation passes.
 
 ### Take the mutation lock first
 
@@ -94,11 +98,120 @@ A retained terminal that must resume work mid-integration waits for that handbac
 2. If `git merge-base --is-ancestor <current-main> <accepted-head>` succeeds, keep that exact accepted head checked out in the Issue Worktree and run all required combined-state build, test, and smoke checks there.
 3. If histories diverge and merge-tree succeeds, create the mechanical merge commit from its tree OID with current main as first parent and accepted head as second parent, then switch the clean Issue Worktree onto a temporary integration branch at that commit. Leave the accepted implementation branch where it is. The candidate tree must equal the preflight tree, with product repair and manual content resolution left to the Integration Worker.
 4. Run the required combined-state checks in that Issue Worktree.
-5. Confirm main still equals the recorded head, then advance it to the validated candidate, preferring a fast-forward; verify main is clean and tree-equivalent.
+5. Apply the authoritative main-advance and publication procedure below.
 
 If combined-state validation fails, main remains unchanged. The Issue Worktree already contains the cleanly merged candidate, so dispatch an Integration Worker there to diagnose/fix it, then require a fresh Integration Reviewer before main advances. The accepted SHA, rather than the worktree's current checkout, remains the original reviewed evidence.
 
 When `git merge-tree --write-tree` is unavailable (Git older than 2.38), get the same non-mutating answer from a throwaway index, for example `GIT_INDEX_FILE=$(mktemp) git read-tree -m --aggressive <merge-base> <current-main> <accepted-head>`, and record which form produced the preflight evidence.
+
+### Main advance and publication
+
+The Wave Manifest's `publication.mode` is the authority for the exact flow. It
+replaces per-push consent only for the configured remote and branches. A force
+push, another branch, or another remote still requires explicit user authority.
+
+For `local-only` and `push-base`, acquire the **main-advance lock** before the
+final base check. With `maxParallelTickets > 1`, only one ticket holds this lock
+at a time. The holder re-reads the base SHA immediately before advancing.
+
+Advance a checked-out base ref only in the durable main checkout where the
+Coordinator session already runs, because Git refuses to update a branch
+checked out in another worktree. Immediately before advancing:
+
+1. In the durable checkout, run
+   `git --no-optional-locks status --porcelain` and require empty output.
+2. Require no merge, rebase, or cherry-pick in progress:
+
+   ```bash
+   test ! -f "$(git -C <durable-checkout> rev-parse --git-path MERGE_HEAD)"
+   test ! -d "$(git -C <durable-checkout> rev-parse --git-path rebase-merge)"
+   test ! -d "$(git -C <durable-checkout> rev-parse --git-path rebase-apply)"
+   test ! -f "$(git -C <durable-checkout> rev-parse --git-path CHERRY_PICK_HEAD)"
+   ```
+
+3. Run the fenced `symbolic-ref` command below and require the exact configured
+   base ref.
+4. Run the fenced `rev-parse HEAD` command below and require the SHA recorded at
+   preflight.
+5. Advance and verify:
+
+   ```bash
+   git -C <durable-checkout> symbolic-ref --quiet HEAD
+   git -C <durable-checkout> rev-parse HEAD
+   git -C <durable-checkout> merge --ff-only <validated-candidate-sha>
+   git -C <durable-checkout> rev-parse HEAD
+   git -C <durable-checkout> rev-parse 'HEAD^{tree}'
+   git -C <durable-checkout> rev-parse '<validated-candidate-sha>^{tree}'
+   ```
+
+   Require the read-back `HEAD` to equal the validated candidate SHA and the two
+   tree OIDs to match. Both the fast-forward and divergent-but-conflict-free
+   paths are fast-forwardable because the mechanical candidate carries the
+   recorded current main as first parent.
+
+A dirty or mid-operation durable checkout is user-owned state. Never stash it,
+reset it, or check out over it. Keep the validated candidate and accepted review
+evidence, send Main a user-level `escalation` naming the exact paths from status
+or the exact merge/rebase/cherry-pick operation, and leave the ticket `blocked`
+until the user clears it.
+
+Run the fenced `worktree list` command below. Only when its output proves that
+no worktree has the exact configured base ref checked out, use compare-and-swap
+from the Issue Worktree:
+
+```bash
+git -C <issue-worktree> worktree list --porcelain
+git -C <issue-worktree> update-ref refs/heads/<base> <validated-candidate-sha> <preflight-base-sha>
+git -C <issue-worktree> rev-parse refs/heads/<base>
+git -C <issue-worktree> rev-parse 'refs/heads/<base>^{tree}'
+git -C <issue-worktree> rev-parse '<validated-candidate-sha>^{tree}'
+```
+
+Require the same SHA and tree-equivalence readback. Record
+`method: ff-merge` for the durable-checkout path or `method: update-ref` for the
+compare-and-swap path.
+
+If the holder finds that the base ref moved, release the main-advance lock,
+preserve accepted review evidence, rebuild and revalidate the candidate against
+the new head under the existing rules, then re-queue it for the lock. After one
+ticket loses this race twice consecutively, integrate the rest of the wave
+serially and record that fallback in `wave_done`.
+
+Finish according to the frozen mode:
+
+- `local-only`: stop after the verified local main advance.
+- `push-base`: after the verified local advance, push without a force refspec
+  and read the remote ref back:
+
+  ```bash
+  git -C <durable-checkout> push --porcelain <remote> refs/heads/<base>:refs/heads/<base>
+  git -C <durable-checkout> ls-remote --exit-code <remote> refs/heads/<base>
+  ```
+
+  Require the returned remote SHA to equal local `HEAD`.
+- `pull-request`: do not advance the local base ref and do not acquire the
+  main-advance lock. After the same preflight and combined-state validation,
+  push the accepted implementation branch without force:
+
+  ```bash
+  git -C <issue-worktree> push --porcelain --set-upstream <remote> refs/heads/<implementation-branch>:refs/heads/<implementation-branch>
+  git -C <issue-worktree> ls-remote --exit-code <remote> refs/heads/<implementation-branch>
+  ```
+
+  Require the remote branch SHA to equal the accepted implementation head. Run
+  the frozen `pullRequestCreateCommand` through the code-review surface in
+  `docs/agents/issue-tracker.md`, then run `pullRequestReadbackCommand` and
+  require the canonical PR/MR link. Attach that link and validation evidence to
+  the ticket through the Adapter. Do not apply the completed lifecycle value.
+  Leave classification untouched unless `docs/agents/triage-labels.md` maps the
+  optional `in-review` role; when it does, apply that role and remove AFK-ready.
+  End the ticket as `submitted`, meaning reviewed, validated, and published for
+  human merge.
+
+If a configured push, remote-ref readback, PR/MR creation, or PR/MR readback
+fails, preserve local commits and accepted evidence, send a user-level
+escalation with the failed command and observed result, apply no tracker
+completion, and leave the ticket `blocked`.
 
 ### Conflict integration
 
@@ -109,13 +222,24 @@ Only when preflight reports content conflicts:
 3. run tests and commit the integration result;
 4. launch a fresh Integration Reviewer in that Integration Worktree;
 5. repeat fix/re-review there if required;
-6. confirm main has not advanced, then advance it only from the accepted and validated integration result.
+6. publish the accepted and validated integration result through the
+   authoritative main-advance and publication procedure above.
 
 Any conflict resolution or validation repair creates product-code state not covered by the original review, so it requires Integration Review. If main advances during staging, preserve the stale evidence and repeat against the new head; use the Issue Worktree again after a clean preflight, or recreate the dedicated Integration Worktree when conflicts remain.
 
 ## Tracker completion and cleanup
 
-After main advances, use the configured Adapter to post reviewed/integrated commit and validation evidence, apply the exact completed lifecycle value without regressing state, remove the AFK-ready role, attach review evidence when configured, and read the ticket back. A successful implementation that remains in a non-completed lifecycle is not complete.
+For `local-only` and `push-base`, after main advances, use the configured
+Adapter to post reviewed/integrated commit and validation evidence, apply the
+exact completed lifecycle value without regressing state, remove the AFK-ready
+role, attach review evidence when configured, and read the ticket back. A
+successful implementation that remains in a non-completed lifecycle is not
+complete.
+
+For `pull-request`, post the canonical PR/MR link and validation evidence, read
+the ticket back, and require the submitted classification rules above. The
+implementation branch push and PR/MR link readback must both succeed before the
+Issue Worktree can be removed.
 
 Sweep ancestors only when parent reads are certified. Close a parent whose children are all complete and whose scope is exhausted, applying the same evidence and readback rules. Leave any other parent open and carry the reason in the wave report.
 

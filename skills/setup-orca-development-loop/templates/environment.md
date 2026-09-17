@@ -3,7 +3,7 @@
 Seed for `docs/agents/environment.md`.
 
 ```yaml
-schemaVersion: 1
+schemaVersion: 2
 verifiedAt: <ISO timestamp>
 
 workspace:
@@ -12,6 +12,10 @@ workspace:
   setupPolicy: <run|skip|inherit>
   setupCommand: <exact command or none>
   setupVerified: <true|false>
+
+publication:
+  mode: <local-only|push-base|pull-request>
+  remote: <exact remote name or none>
 
 validation:
   source:
@@ -33,4 +37,10 @@ an explicitly accepted lack of automated tests; never turn it into a shell
 command. The Wave Manifest copies this validation block and records a fresh
 source fingerprint. Name required environment variables without embedding
 their secret values.
+
+`local-only` uses `none` for the remote. `push-base` and `pull-request` record
+the exact remote name. The pull-request commands themselves live once, with the
+code-review surface in `docs/agents/issue-tracker.md`, so `pull-request`
+requires exact `codeReview.createPullRequest` and `codeReview.readPullRequest`
+entries there; the Wave Manifest freezes the resolved pair.
 

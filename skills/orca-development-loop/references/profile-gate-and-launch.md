@@ -46,6 +46,9 @@ For Alignment, show the one configured profile, effective headroom, and launch
 mode. For Execution, show role bindings/pools, ticket tier coverage,
 Worker/Reviewer families, each entry's `maxConcurrent`,
 `maxParallelTickets`, and the resulting maximum live Dispatch count.
+Whenever a selected entry uses `user-attested` evidence, also state that its
+exact argv was user-confirmed but provider/model cannot be independently
+observed.
 
 Wait for explicit confirmation before creating a Task, handoff, or terminal.
 Ticket, Adapter, validation, or profile changes invalidate confirmation.
@@ -58,7 +61,8 @@ Before generating the Coordinator handoff:
    Reviewer, Integration Worker, Integration Reviewer, and ticket pins.
 2. Copy each complete definition into the Wave Manifest's `profiles`
    dictionary: exact agent/model/reasoning, family, tier coverage,
-   `maxConcurrent`, current headroom, launch recipes, and certification facts.
+   `maxConcurrent`, current headroom, effective-profile evidence, launch
+   recipes, and certification facts.
 3. Store role pools and integration assignments under `roleBindings` as IDs
    into that dictionary.
 4. Require the dictionary keys to equal the unique referenced IDs and validate
@@ -80,11 +84,17 @@ Manifest's profile dictionary, bind the affected role to its ID, and set
 repository profile file.
 
 Do not create a setup Probe Run during delivery. The real role launch is the
-override's launch test: verify its receipt or attestation before allowing work,
-and stop on mismatch or failure.
+override's launch test: apply the bounded evidence rule before allowing work.
+If replacement is needed after Coordinator startup, use the confirmed
+manifest-revision channel rather than an informal wait.
 
 Never invent or recommend an override on the user's behalf. A same-family
 review override requires a separate explicit decision in the manifest.
+
+For a running wave, Main delivers an override only as the next user-confirmed
+manifest version through `--type handoff --subject manifest_revision
+--report-path "$manifest_path"`. The Coordinator revalidates it at the safe
+point defined in its manifest revision gate.
 
 ## Launch recipes
 
@@ -93,7 +103,7 @@ one from model-name conventions or mutable repository configuration.
 
 Supervised roles use `launch.supervised` and its matching certification. The
 top-level Coordinator uses `launch.fullHandoff`; success on one purpose never
-certifies the other.
+certifies the other. Apply the matching frozen `effectiveProfileEvidence`.
 
 For a composed supervised launch:
 
@@ -103,7 +113,9 @@ orca orchestration worker-start --task <task> --worktree <selector> \
 ```
 
 Omit model/effort only when the stored recipe explicitly uses
-`inherit-agent-default`. Compare `launch.requested` with `launch.effective`.
+`inherit-agent-default`. The start receipt's `launch.effective` is normative and
+sufficient. Compare it with `launch.requested`; do not run an in-Task profile
+probe.
 
 For a pre-created terminal:
 
@@ -115,8 +127,12 @@ orca orchestration worker-start --task <task> --worktree <selector> \
   --terminal <handle> --run <run> --json
 ```
 
-The Task's harness-native attestation supplies effective-profile evidence. Keep
-argv as structured values until rendering and use the version-matched guide for
+The start receipt cannot report the pre-created terminal's provider/model. Use
+the one harness-documented read-only command frozen under
+`effectiveProfileEvidence` when its mode is `attestation`. When its mode is
+`user-attested`, run no substitute command; compare the exact launched argv with
+the confirmed argv and carry the independent-verification limitation. Keep argv
+as structured values until rendering and use the version-matched guide for
 quoting on the current platform.
 
 The top-level Coordinator uses its certified full-handoff recipe, not
@@ -127,7 +143,10 @@ send the handoff, and stop monitoring inner work.
 
 1. Create the complete Alignment Task first.
 2. Launch through its certified supervised recipe.
-3. Read one bounded post-launch receipt or attestation.
+3. Read one bounded post-launch receipt. For a composed launch, compare its
+   `launch.requested` and `launch.effective` and inline those verified values in
+   the Task; no Alignment-agent probe follows. For a pre-created terminal,
+   apply its `attestation` command or `user-attested` argv rule.
 4. On mismatch, send `profile_mismatch`, perform no requirement work, and
    reclaim the incorrect launch using its receipt.
 5. Ask the user to switch only after effective values match.
@@ -147,13 +166,23 @@ send the handoff, and stop monitoring inner work.
 5. fail over only to another confirmed pool entry satisfying tier and family
    policy.
 
-An out-of-pool substitute requires a new Wave Manifest and user confirmation.
+An out-of-pool substitute requires the confirmed manifest-revision channel for
+not-yet-launched work. Continue under the accepted version until the Coordinator
+returns `manifest_accepted`.
 If a vouched provider fails its real launch, the vouch no longer holds; report
 setup drift after any in-pool failover is exhausted.
 
 ## Bounded evidence
 
-An effective profile comes from the launch receipt or one harness-native
-attestation. Never use broad process scans, environment dumps, shell history,
-or repeated full-terminal reads. Those paths are both unreliable and capable of
-leaking credentials.
+Use exactly one evidence rule:
+
+- a composed `worker-start --agent --model --effort` launch uses its start
+  receipt's `launch.effective`; this is normative and needs no in-Task probe;
+- a pre-created-terminal or custom-argv launch uses one harness-documented,
+  read-only attestation command frozen at setup;
+- when the harness documents no such command, use `user-attested` evidence with
+  `command: null` and the exact confirmed argv, state its limitation at every
+  profile confirmation, and proceed.
+
+Never use broad process scans, environment dumps, shell history, or repeated
+full-terminal reads. Those paths are unreliable and can leak credentials.

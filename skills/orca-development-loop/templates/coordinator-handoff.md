@@ -12,7 +12,7 @@ Save the rendered document in the OS temporary directory.
 
 - Main Run: `<run id>`
 - Main terminal/owner reference: `<reference>`
-- Upstream signals: `coordinator_ready`, `profile_mismatch`, user-level `escalation`, `wave_done`, each sent through the message-type mapping in the communication contract
+- Upstream signals: `coordinator_ready`, `profile_mismatch`, `manifest_accepted`, `manifest_rejected`, user-level `escalation`, `wave_done`, each sent through the message-type mapping in the communication contract
 
 ## Confirmed Wave Manifest
 
@@ -39,10 +39,10 @@ Fetch full ticket bodies and comments through the Wave Manifest's Tracker Adapte
 - After every implementation or fix completion, perform metadata-only checks and dispatch a separate Reviewer before any code judgment; use a fresh Reviewer with the full Task for the first review and the retained Reviewer with the delta Re-review Task for bounded incremental re-review.
 - Leave `code-review` to the Reviewer Agent, the only role that issues a review verdict.
 - Require final Reviewer `ACCEPT` before integration.
-- Preflight every merge without mutating main or creating another worktree. Validate a conflict-free candidate in the existing Issue Worktree and advance main only after green checks and tree equivalence.
+- Follow the Issue Worktree Loop's authoritative [main-advance and publication procedure](../references/issue-worktree-loop.md#main-advance-and-publication) after candidate validation.
 - Create a dedicated Integration Worktree only after preflight reports content conflicts. A conflict-free candidate that fails combined-state validation is repaired and integration-reviewed in the existing Issue Worktree.
 - Keep inner orchestration mail in the Coordinator Run.
-- Push a remote only with explicit user authority.
+- Treat the Wave Manifest's publication mode as authority only for its exact remote and branch flow; force push, another branch, or another remote still requires explicit user authority.
 - Stalled Dispatches, non-converging reviews, blocked tickets, and user aborts follow the failure-and-recovery reference.
 
 ## Project references
@@ -57,7 +57,7 @@ Validation commands come from the Wave Manifest, which already resolved them.
 
 ## Completion
 
-Return one bounded `wave_done` report in the JSON shape from the Coordinator reference: Adapter revision, every ticket's outcome (`integrated`, `blocked`, or `abandoned`), reviewed/integrated commits, post-integration validation, tracker readback, supported ancestor sweeps, cleanup state, and residual risks. Then idle so Main can close the top-level terminal.
+Return one bounded `wave_done` report in the JSON shape from the Coordinator reference: Adapter revision, publication mode, every ticket's manifest version and outcome (`integrated`, `submitted`, `blocked`, or `abandoned`), main-advance evidence when applicable, reviewed/integrated commits or submitted PR/MR, validation, tracker readback, supported ancestor sweeps, cleanup state, and residual risks. Then idle so Main can close the top-level terminal.
 
 ## Coordinator skills
 

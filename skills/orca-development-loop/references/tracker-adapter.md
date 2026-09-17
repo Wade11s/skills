@@ -137,13 +137,19 @@ the configured primary tracker during a delivery request.
 
 ## Completion
 
-After reviewed integration:
+After reviewed integration in `local-only` or `push-base` mode:
 
 1. publish commit/review and validation evidence;
 2. apply the configured completed lifecycle value;
 3. remove the AFK-ready role;
-4. attach the PR/MR when configured;
+4. attach review evidence when configured;
 5. read the work item back and record observed state.
+
+In `pull-request` mode, require the implementation-branch push plus canonical
+PR/MR link readback, then post that link and validation evidence. Do not apply
+the completed lifecycle value. Leave classification untouched unless the
+optional `in-review` role is mapped; when it is, apply that role and remove
+AFK-ready. Read the ticket back and report `submitted`.
 
 Sweep parents only when parent reads are certified. A parent closes only when
 all children are complete and its scope is exhausted. Otherwise leave it open

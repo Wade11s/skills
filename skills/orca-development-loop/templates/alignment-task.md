@@ -11,16 +11,22 @@ Shape the user's feature, feedback, or bug into a verified manifest in the confi
 - Reasoning: `<thinking or effort level>`
 - User confirmation: `<timestamp or Main message reference>`
 - Certified launch recipe: `<structured recipe from the current host profile>`
-- Runtime verification: `<launch receipt or harness-native probe>`
+- Effective-profile evidence: render `receipt`, `attestation`, or
+  `user-attested`
+- Runtime verification: render the receipt values, attestation command, or
+  exact user-confirmed argv plus limitation
 - Tracker write eligibility: `<Adapter revision, certification, and complete writeRiskAcceptance snapshot or null>`
 
-Your first action is the runtime probe named by the certified recipe. For a Pi recipe, run through the Pi `bash` tool:
+Render exactly one evidence instruction:
 
-```bash
-printf 'ALIGNMENT_PROFILE=%s/%s:%s\n' "$PI_PROVIDER" "$PI_MODEL" "$PI_REASONING_LEVEL"
-```
-
-Compare the result with the confirmed profile. On mismatch, send an escalation, perform no requirement work, and idle.
+- `receipt`: Main already compared the composed start receipt's
+  `launch.requested` and `launch.effective`; the verified values are inlined
+  above. Run no profile probe.
+- `attestation`: first run only the recorded read-only command inlined above.
+  Compare its values with the confirmed profile. On mismatch, send an
+  escalation, perform no requirement work, and idle.
+- `user-attested`: run no profile probe. State that the exact argv above was
+  user-confirmed and provider/model cannot be independently observed.
 
 ## Initial request
 
@@ -30,7 +36,12 @@ Compare the result with the confirmed profile. On mismatch, send an escalation, 
 
 The user will switch to this terminal and converse directly. The Initial Request above is the handoff; never send the user back to Main or ask them to repeat it.
 
-After a matching runtime probe and before broad repository/tracker exploration, make the first visible response include the exact `ALIGNMENT_PROFILE` attestation, acknowledge and summarize the received feedback, recommend exactly one narrow user-invoked skill, show the exact slash command, and tell the user to run it here without returning to Main. Then wait for the user to run it:
+After applying the selected evidence instruction and before broad
+repository/tracker exploration, make the first visible response include the
+evidence mode and exact profile values, acknowledge and summarize the received
+feedback, recommend exactly one narrow user-invoked skill, show the exact slash
+command, and tell the user to run it here without returning to Main. Then wait
+for the user to run it:
 
 - `/grill-with-docs` for ambiguous product decisions, so settled decisions land in ADRs and the glossary that Workers and Reviewers later read; `/grill-me` when nothing is worth recording;
 - `/diagnosing-bugs` for unclear bug behaviour;

@@ -35,6 +35,8 @@ Setup is complete when:
 - Alignment and Execution readiness are stated separately;
 - triage roles, complexity routing, domain layout, worktree setup, and
   validation commands are resolved;
+- one publication mode, its exact remote, and any pull-request commands are
+  resolved without publishing during setup;
 - the user has supplied every long-lived agent profile and each launch recipe
   required by a ready phase has passed; policy exceptions are recorded
   separately;
@@ -147,14 +149,16 @@ Only after selecting the tracker:
 1. Map the canonical triage roles `needs-triage`, `needs-info`,
    `ready-for-agent`, `ready-for-human`, and `wontfix` to exact labels,
    metadata, custom fields, or states.
-2. Choose a complexity representation: `label`, `estimate`, `custom-field`, or
+2. Optionally map `in-review` for work published for human merge. Leave it
+   explicitly `not-mapped` when the tracker has no suitable existing value.
+3. Choose a complexity representation: `label`, `estimate`, `custom-field`, or
    `none`.
-3. Map `simple`, `standard`, and `complex` to exact tracker values; set the
+4. Map `simple`, `standard`, and `complex` to exact tracker values; set the
    missing-signal default.
-4. Select and verify the dependency evidence mode under the
+5. Select and verify the dependency evidence mode under the
    [blocker evidence contract](../orca-development-loop/references/tracker-adapter.md#blocker-evidence-contract).
    Record the selected mode and its exact read procedure in the Adapter.
-5. Keep PR/MR linkage separate from primary tracker identity.
+6. Keep PR/MR linkage separate from primary tracker identity.
 
 Verify referenced values exist. Do not create remote labels, fields, or states
 without showing the exact writes and obtaining consent.
@@ -170,7 +174,7 @@ Preserve the Matt-compatible domain contract:
 - do not create domain content ahead of a real modeling decision;
 - missing context and ADR files are normal and remain silent at runtime.
 
-## 5. Resolve worktree setup and validation
+## 5. Resolve worktree setup, validation, and publication
 
 Derive exact values in this order:
 
@@ -185,7 +189,25 @@ Resolve:
 - base ref and `run|skip|inherit` worktree setup policy;
 - setup command or explicit absence;
 - command working directory;
-- fast tier, full suite, repo-specific checks, and shared-core paths.
+- fast tier, full suite, repo-specific checks, and shared-core paths;
+- one publication mode:
+  - `local-only`: advance the local base ref and publish nothing;
+  - `push-base`: advance the local base ref, then push it to one exact remote;
+  - `pull-request`: leave the local base ref unchanged, push each accepted
+    implementation branch to one exact remote, and open a PR/MR.
+
+For `push-base` and `pull-request`, resolve the exact remote name. For
+`pull-request`, also resolve exact create and link-readback commands for the
+code-review surface recorded in `docs/agents/issue-tracker.md`. Use read-only
+checks to prove the remote, provider CLI, authentication, repository scope, and
+command help. Setup never pushes a branch or opens a PR/MR. If `push-base`
+targets a branch that provider metadata or repository policy makes look
+protected, warn that the push may be rejected and recommend `pull-request`.
+
+Each wave freezes the confirmed mode, and that frozen mode is the standing
+authority for its own remote and branch flow, so delivery asks for no further
+per-push consent. A force push, another branch, or another remote stays outside
+it and still needs explicit user authority.
 
 This loop's Execution phase commits, reviews, and integrates Git state, so a
 folder-only workspace may be Alignment-ready but is Execution-blocked. Do not
@@ -249,10 +271,19 @@ For each unique profile, validate:
 - authentication is usable;
 - model family is known;
 - the launch path can express the requested profile;
+- the launch has one `effectiveProfileEvidence` mode:
+  - `receipt` for a composed `worker-start --agent --model --effort` launch;
+  - `attestation` with one exact harness-documented read-only command for a
+    pre-created-terminal or custom-argv launch;
+  - `user-attested` with `command: null` and the exact confirmed argv when the
+    harness documents no attestation command;
 - Worker/Reviewer and integration-review family constraints can be satisfied.
 
 Report failures by layer and ask for a replacement or explicit policy
 exception. A same-family review exception must be recorded, not inferred.
+`user-attested` is a supported degradation, not a failed certification; state
+that provider/model cannot be independently observed every time the profile is
+presented for confirmation.
 
 ## 8. Certify launch recipes
 
@@ -262,21 +293,27 @@ role; add a separate full-handoff probe for a profile bound to Coordinator.
 - Create one dedicated Probe Run.
 - Prefer one disposable top-level worktree for all supervised probes.
 - Use `worker-start --agent --model --effort` when Orca can express the
-  profile.
+  profile. Its start receipt's `launch.effective` is normative and sufficient;
+  the Task performs no second profile probe.
 - Otherwise create the terminal with exact argv, wait for `tui-idle`, then use
   `worker-start --terminal`.
-- Render [the probe template](templates/profile-probe-task.md). Require the
-  no-edit Task to attest the effective profile, prove lifecycle injection, send
-  exactly one `worker_done`, and idle.
-- Compare requested/effective launch values or the harness-native attestation.
+- Render [the probe template](templates/profile-probe-task.md) for the selected
+  evidence mode. Every no-edit Task proves lifecycle injection, sends exactly
+  one `worker_done`, and idles. Only `attestation` mode runs an in-Task profile
+  command.
+- Compare requested/effective receipt values, one harness-native attestation,
+  or the exact user-confirmed argv. For `user-attested`, record
+  `requestedEffectiveMatch: null` and the independent-verification limitation.
 - Complete any deferred tracker worktree-link probe against this disposable
   worktree and read the link back.
 - Release settled supervised resources, close only unsupervised probe
   terminals, verify Git stayed unchanged, then remove the disposable worktree.
 
 Certify the Coordinator's top-level full-handoff recipe separately with
-terminal create, readiness wait, one attestation prompt, and close. Do not let a
-probe Coordinator create another Run or dispatch workers.
+terminal create, readiness wait, one bounded no-work prompt, and close. The
+prompt runs the recorded read-only command in `attestation` mode or reports the
+exact confirmed argv and limitation in `user-attested` mode. Do not let a probe
+Coordinator create another Run or dispatch workers.
 
 Persist structured launch fields and evidence, not runtime handles or a
 shell-quoted command string. Keep supervised and full-handoff recipes and
@@ -321,18 +358,24 @@ Read every written file back and confirm:
 - front matter and YAML blocks parse;
 - the setup manifest points at existing files;
 - readiness agrees with certified capabilities;
+- `publication.mode`, its exact remote or `none`, and any PR/MR create and
+  readback commands agree with the selected code-review surface;
 - dependency evidence mode names either an exact verified read procedure or the
   complete per-ticket user-attestation requirement, and the runtime contract
   freezes the resulting completeness receipt;
 - the root block is not duplicated;
 - no secret or ephemeral ID was stored;
 - every certified profile belongs to the current host and Orca version;
+- every launch recipe records `effectiveProfileEvidence`; `receipt` has
+  `command: null`, `attestation` has one read-only command, and
+  `user-attested` retains exact confirmed argv plus its limitation;
 - every probe terminal/worktree has a proven disposition;
 - the repository contains no unexpected product-file changes.
 
 Report Alignment and Execution readiness separately, any unexercised tracker
-writes, the selected tracker and review surface, validation commands, certified
-role bindings, retained probe evidence, and the exact next action. Later edits
-to long-lived setup should go through this skill so the manifest and
+writes, the selected tracker and review surface, publication mode, validation
+commands, certified role bindings, retained probe evidence, any
+`user-attested` limitation, and the exact next action. Later edits to
+long-lived setup should go through this skill so the manifest and
 certifications remain coherent.
 
