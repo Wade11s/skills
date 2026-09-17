@@ -38,8 +38,7 @@ Setup is complete when:
 - one publication mode, its exact remote, and any pull-request commands are
   resolved without publishing during setup;
 - the user has supplied every long-lived agent profile and each launch recipe
-  required by a ready phase has passed; policy exceptions are recorded
-  separately;
+  required by a ready phase has passed with a `recipeFingerprint`;
 - host-specific profiles live only in the gitignored
   `docs/agents/agent-hosts.local.yaml`;
 - `docs/agents/orca-development-loop.md` points at complete configuration
@@ -66,11 +65,11 @@ base ref or setup policy, and confirm it before writing.
 Declining a tracker write probe records writes as
 `declared-not-exercised`, never `passed`. Apply the
 [write eligibility gate](../orca-development-loop/references/tracker-adapter.md#write-eligibility-gate)
-before setting phase readiness: separately ask whether the user accepts real
-work as the first write test, then record scoped acceptance or leave the
-affected phases blocked. Declining agent launch probes leaves
-the affected profiles uncertified and the relevant readiness state blocked.
-Never use `orchestration reset` to clean probes.
+before setting phase readiness: when other gates pass, keep the phase usable
+and set `requiresWriteConfirmation: true`. Do not collect or persist a standing
+risk waiver. Declining agent launch probes leaves the affected profiles
+uncertified and the relevant readiness state blocked. Never use
+`orchestration reset` to clean probes.
 
 ## 1. Inspect without writing
 
@@ -243,16 +242,16 @@ silently reset it.
 
 Read [Profile certification](references/profile-certification.md).
 
-Ask for expected parallel-ticket capacity, provider failover needs, review
-independence, and cost/latency preferences. Recommend capabilities and pool
-shape, not exact models:
+Ask for expected parallel-ticket capacity, provider failover needs, whether a
+second Reviewer family is available, and cost/latency preferences. Recommend
+capabilities and pool shape, not exact models:
 
 | Role | Required shape | Default profile count |
 |---|---|---|
 | Alignment | product conversation, high reasoning, long context | 1 |
 | Coordinator | exact command following, long context, economical | 1 |
 | Worker | strongest appropriate coding and test ability | 1; 2 for failover or parallel providers |
-| Reviewer | adversarial review, high reasoning, different family from Worker | 1; 2 for failover or clean-room variety |
+| Reviewer | adversarial review, high reasoning; prefer a different family from Worker | 1; 2 for failover, clean-room variety, or family diversity |
 | Integration Worker | high-stakes merge and combined-state repair | inherit a qualified Worker, else 1 |
 | Integration Reviewer | independent review of integration-created state | inherit a qualified Reviewer, else 1 |
 
@@ -279,7 +278,8 @@ For each unique profile, validate:
 - Orca recognizes the agent;
 - the exact model and reasoning level are accepted;
 - authentication is usable;
-- model family is known;
+- model family is recorded as a lineage or `unknown`; unknown family is not a
+  certification failure;
 - the launch path can express the requested profile;
 - the launch has one `effectiveProfileEvidence` mode:
   - `receipt` for a composed `worker-start --agent --model --effort` launch;
@@ -287,13 +287,15 @@ For each unique profile, validate:
     pre-created-terminal or custom-argv launch;
   - `user-attested` with `command: null` and the exact confirmed argv when the
     harness documents no attestation command;
-- Worker/Reviewer and integration-review family constraints can be satisfied.
+- Worker and Reviewer bindings exist; prefer a different family when both
+  families are known and a compatible entry has capacity, without blocking
+  same-family or unknown-family review or adding a provider gate;
+- each launch purpose has a `recipeFingerprint`.
 
-Report failures by layer and ask for a replacement or explicit policy
-exception. A same-family review exception must be recorded, not inferred.
-`user-attested` is a supported degradation, not a failed certification; state
-that provider/model cannot be independently observed every time the profile is
-presented for confirmation.
+Report failures by layer and ask for a replacement. Same-family or
+unknown-family review needs no exception. `user-attested` is a supported
+degradation, not a failed certification; state that provider/model cannot be
+independently observed every time the profile is presented for confirmation.
 
 ## 8. Certify launch recipes
 
@@ -325,11 +327,12 @@ prompt runs the recorded read-only command in `attestation` mode or reports the
 exact confirmed argv and limitation in `user-attested` mode. Do not let a probe
 Coordinator create another Run or dispatch workers.
 
-Persist structured launch fields and evidence, not runtime handles or a
-shell-quoted command string. Keep supervised and full-handoff recipes and
-certifications separate in `docs/agents/agent-hosts.local.yaml`. Certification
-is keyed by Orca host, Orca version, agent, model, reasoning, launch purpose,
-and launch mode.
+Persist structured launch fields, `recipeFingerprint`, and evidence, not runtime
+handles or a shell-quoted command string. Keep supervised and full-handoff
+recipes and certifications separate in `docs/agents/agent-hosts.local.yaml`.
+Certification is keyed by Orca host, agent, model, reasoning, launch purpose,
+launch mode, and `recipeFingerprint`. Store the observed Orca version as
+provenance, not as an equality gate.
 
 ## 9. Preview and write
 
@@ -366,8 +369,24 @@ Temporary Tasks and handoffs delivered to a launched agent may reference
 installed-skill paths because the receiving agent has the skill.
 
 For legacy configuration, adopt confirmed values, convert Linear-specific
-language to the selected Adapter, and migrate agent profile schema only in the
-previewed write. When committed `docs/agents/agent-profiles.md` contains
+language to the selected Adapter, and migrate schema only in the previewed
+write. Do not silently reinterpret an active wave. Migrate:
+
+- exact-version launch certification without `recipeFingerprint` by recertifying
+  the complete command pipeline into a fingerprint and moving old
+  `orcaVersion`, `certifiedVersion`, or `certifiedOrcaVersion` values into the
+  corresponding `orcaVersionObservedAt...` provenance field; preserve prior
+  launch evidence when the bounded capability and evidence checks still match,
+  and rerun a launch probe only when its recipe or evidence mode changed;
+- `writeRiskAcceptance` by deleting it and setting `requiresWriteConfirmation`
+  from `certification.writes`: `passed` maps to `false`;
+  `declared-not-exercised` maps to `true` only when at least one write-dependent
+  phase is otherwise usable; and `failed` maps to `false` while the affected
+  phase stays blocked;
+- `different-family-from-worker` and `same-family-accepted-by-user` to
+  `prefer-different-family`.
+
+When committed `docs/agents/agent-profiles.md` contains
 `hosts:`, move those entries into `docs/agents/agent-hosts.local.yaml`, remove
 them from the committed file, and verify that the local file is not tracked. If
 `git ls-files --error-unmatch docs/agents/agent-hosts.local.yaml` shows that the
@@ -388,26 +407,30 @@ Read every written file back and confirm:
 - the setup manifest points at existing files;
 - `.gitignore` contains exactly one
   `docs/agents/agent-hosts.local.yaml` entry, and the local file is not tracked;
-- readiness agrees with certified capabilities;
+- readiness agrees with certified capabilities, and `requiresWriteConfirmation`
+  is true only when writes are `declared-not-exercised` and the phase is usable;
+- no `writeRiskAcceptance` record remains;
 - `publication.mode`, its exact remote or `none`, and any PR/MR create and
   readback commands agree with the selected code-review surface;
-- dependency evidence mode names either an exact verified read procedure or the
-  complete per-ticket user-attestation requirement, and the runtime contract
-  freezes the resulting completeness receipt;
+- dependency evidence mode names either an exact verified read procedure or
+  user attestation; named or ambiguous blockers stay ticket-specific, while
+  unreadable empty sets share the later phase confirmation;
 - the root block is not duplicated;
 - no secret or ephemeral ID was stored;
 - every certified profile in `docs/agents/agent-hosts.local.yaml` belongs to the
-  current host and Orca version;
+  current host and has a `recipeFingerprint` compatible with the current command
+  surface; report the newly observed Orca version;
 - every launch recipe records `effectiveProfileEvidence`; `receipt` has
   `command: null`, `attestation` has one read-only command, and
   `user-attested` retains exact confirmed argv plus its limitation;
 - every probe terminal/worktree has a proven disposition;
 - the repository contains no unexpected product-file changes.
 
-Report Alignment and Execution readiness separately, any unexercised tracker
-writes, the selected tracker and review surface, publication mode, validation
-commands, the local host-profile path, certified role bindings, retained probe
-evidence, any `user-attested` limitation, migration index cleanup when
-applicable, and the exact next action. Later edits to long-lived setup should go
-through this skill so the manifest and certifications remain coherent.
+Report Alignment and Execution readiness separately, `requiresWriteConfirmation`,
+the selected tracker and review surface, publication mode, validation commands,
+the local host-profile path, certified role bindings and families, retained probe
+evidence, any `user-attested` limitation, the certification-time and current
+observed Orca versions, migration index cleanup when applicable, and the exact
+next action. Later edits to long-lived setup should go through this skill so the
+manifest and certifications remain coherent.
 

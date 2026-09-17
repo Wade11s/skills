@@ -12,6 +12,10 @@
 - [Fix]: self-contained setup documents + inline blocker and write eligibility contracts in the rendered Tracker Adapter and point readiness links at repository-local anchors.
 - [Update]: host-local agent profiles + keep shared routing policy committed while moving host identity, exact models, and launch recipes to gitignored `docs/agents/agent-hosts.local.yaml`.
 - [Fix]: deterministic wave artifacts + derive the OS temporary wave directory name from the path-safe `waveId` so a resumed Main session can find it.
+- [Fix]: capability compatibility + store Orca version as provenance and key launch certification on a structured recipeFingerprint so a version change alone is not setup drift.
+- [Fix]: tracker write confirmation + replace the durable per-operation writeRiskAcceptance ratchet with one phase-local confirmation at Alignment or Execution while failed or missing writes stay unwaivable.
+- [Fix]: empty blocker confirmation + let unreadable empty blocker sets share the existing Execution confirmation while named, hinted, or ambiguous blockers stay ticket-specific.
+- [Update]: reviewer independence + prefer a different model family when capacity exists, allow same-family review without an exception, and keep independence in a separate read-only Reviewer Dispatch.
 
 ## 2026-09-15
 

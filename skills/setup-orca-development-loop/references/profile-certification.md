@@ -13,8 +13,9 @@ naming models:
 - one Worker and one Reviewer profile for a minimal serial loop;
 - a second entry in either pool for provider failover, parallel-provider
   capacity, or clean-room variety;
-- inherit integration roles only from entries trusted for high-stakes work and
-  still satisfying cross-family review.
+- inherit integration roles only from entries trusted for high-stakes work;
+  prefer a different family for Integration Reviewer when a compatible entry
+  exists.
 
 `profile count`, `maxConcurrent`, and current live agent count are different
 facts. Do not multiply profiles merely because several instances may run.
@@ -27,7 +28,7 @@ Collect, per unique profile:
 - exact Orca agent/harness;
 - exact model ID, or an explicit `inherit-agent-default` choice;
 - reasoning flag and level;
-- model family;
+- model family, or `unknown` when lineage cannot be established;
 - trusted complexity tiers;
 - maximum concurrent instances;
 - roles that bind to it.
@@ -46,15 +47,37 @@ candidates:
 3. the reasoning option is valid for that model;
 4. authentication is ready, or a bounded smoke call proves a provider whose
    probe is inconclusive;
-5. family is known;
-6. role bindings contain at least one valid Worker/Reviewer family pair;
+5. family metadata is recorded as a lineage or `unknown`; unknown family is not
+   a certification failure;
+6. role bindings contain at least one Worker and one Reviewer; prefer a
+   different-family pair when both families are known and a compatible entry
+   exists, but do not block same-family or unknown-family review and do not add
+   a provider or vendor gate;
 7. launch preferences fit either the composed or custom-argv path;
-8. each launch purpose has one effective-profile evidence mode:
+8. each launch purpose has one effective-profile evidence mode and one
+   `recipeFingerprint` in the runtime
+   [Capability compatibility](../../orca-development-loop/references/profile-gate-and-launch.md#capability-compatibility)
+   shape, covering every command in that recipe's pipeline and only the
+   receipt/evidence fields it reads:
    - `receipt` for a composed launch;
    - `attestation` with one harness-documented read-only command for a
      pre-created-terminal or custom-argv launch;
    - `user-attested` with the exact user-confirmed argv when no such command
      exists.
+
+A composed supervised fingerprint covers `orchestration worker-start`, the
+stored `task`, `worktree`, `agent`, `run`, and `json` flags, the stored
+`model`/`effort` flags when not inherited, their documented incompatibilities,
+and the `launch.requested`/`launch.effective` receipt fields. A pre-created
+supervised fingerprint additionally covers `terminal create`, `terminal wait`,
+and the `worker-start --terminal` attach, including the documented
+`terminal`/`agent`, `terminal`/`model`, and `terminal`/`effort`
+incompatibilities. A full-handoff fingerprint covers `terminal create`,
+`terminal wait`, and `terminal send`.
+
+Do not hash help prose. Certification is keyed by host, agent, model, reasoning,
+launch purpose, launch mode, and the canonical fingerprint. Store the observed
+Orca version as provenance, not as an equality gate.
 
 Prefer a documented non-refreshing auth check. Do not start an interactive
 login flow or create credentials on the user's behalf.
@@ -153,7 +176,7 @@ certification:
   supervised:
     status: passed
     hostKey: <Orca host key>
-    orcaVersion: <version>
+    orcaVersionObservedAtCertification: <provenance>
     certifiedAt: <timestamp>
     requestedEffectiveMatch: true
     lifecycleCompleted: true
@@ -161,7 +184,7 @@ certification:
   fullHandoff:
     status: <passed|not-required>
     hostKey: <Orca host key>
-    orcaVersion: <version>
+    orcaVersionObservedAtCertification: <provenance>
     certifiedAt: <timestamp or null>
     requestedEffectiveMatch: <true|null>
     repositoryUnchanged: <true|null>

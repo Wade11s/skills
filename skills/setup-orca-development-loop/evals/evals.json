@@ -75,7 +75,7 @@
         "Distinguishes profile count from concurrent agent instances",
         "Recommends one Alignment and one Coordinator profile",
         "Explains when a second Worker or Reviewer profile adds failover value",
-        "Requires cross-family review unless the user records an exception",
+        "Prefers a different-family Reviewer when a compatible entry exists, without requiring an exception for same-family review",
         "Does not enumerate model catalogs"
       ]
     },
@@ -88,7 +88,8 @@
         "Does not replace the user-supplied models",
         "Checks agent, model, reasoning, auth, family, and launch expressiveness",
         "Explains model quota and Orca resource side effects before launching",
-        "Requires profile attestation and exactly one worker_done",
+        "Requires the configured effective-profile evidence and exactly one worker_done",
+        "Stores a recipeFingerprint per launch purpose and Orca version as provenance",
         "Verifies repository state is unchanged and safely disposes probe resources"
       ]
     },
@@ -101,6 +102,7 @@
         "Stores argv as structured values rather than an interpolated shell string",
         "Waits for tui-idle before injection",
         "Uses worker-start --terminal for lifecycle ownership",
+        "Fingerprints terminal create, terminal wait, and the worker-start --terminal attach with their required and incompatible flags",
         "Uses a harness-native attestation",
         "Does not treat dispatch --inject as supervised ownership"
       ]
@@ -108,21 +110,21 @@
     {
       "id": 9,
       "prompt": "I do not allow a temporary tracker issue, but read access works. Continue setup.",
-      "expected_output": "Records tracker reads as passed and writes as declared-not-exercised, surfaces the risk, and never calls the write path.",
+      "expected_output": "Records tracker reads as passed and writes as declared-not-exercised, sets requiresWriteConfirmation, and never calls the write path.",
       "files": [],
       "expectations": [
         "Respects the refusal",
         "Does not mark writes passed",
         "Does not create or edit a tracker item",
-        "Carries the unexercised-write status into the setup manifest",
-        "Asks separately for scoped acceptance of real work as the first write test",
-        "Leaves write-dependent phases blocked until that acceptance is explicit"
+        "Carries declared-not-exercised into the setup manifest",
+        "Does not collect or persist writeRiskAcceptance",
+        "Keeps write-dependent phases usable with requiresWriteConfirmation true when other gates pass"
       ]
     },
     {
       "id": 10,
       "prompt": "This repo is already configured on my laptop, but I just imported it on a second Orca host. Refresh only what is host-specific.",
-      "expected_output": "Preserves committed project policy and the Tracker Adapter, adds or updates one entry in gitignored docs/agents/agent-hosts.local.yaml, and re-certifies launch recipes for this Orca version.",
+      "expected_output": "Preserves committed project policy and the Tracker Adapter, adds or updates one entry in gitignored docs/agents/agent-hosts.local.yaml, and certifies launch recipes for this host with recipeFingerprint provenance.",
       "files": [],
       "expectations": [
         "Keeps shared policy in docs/agents/agent-profiles.md and host entries in docs/agents/agent-hosts.local.yaml",
@@ -147,14 +149,14 @@
     },
     {
       "id": 12,
-      "prompt": "All other setup gates passed. I declined the tracker probe, but explicitly accept real execution writes as the first test for Adapter rev-7, project P, operations comment, lifecycle, triage and worktree-link. I do not accept Alignment writes.",
-      "expected_output": "Records revision-, scope-, operation- and phase-bound acceptance, permits Execution readiness only, and retains declared-not-exercised certification.",
+      "prompt": "All other setup gates passed, but the tracker write probe failed on lifecycleWrite. I want to accept the risk and mark Execution ready anyway.",
+      "expected_output": "Keeps writes failed, blocks Execution, and refuses to treat confirmation as a waiver of a known failure or missing required operation.",
       "files": [],
       "expectations": [
-        "Stores unexercisedWritesAcceptedByUserAt with the exact confirmation reference",
-        "Keeps Alignment blocked",
-        "Marks Execution ready only if all required writes are covered",
-        "Does not mark writes passed or exercise the declined probe"
+        "Does not mark writes passed or declared-not-exercised after a known failure",
+        "Does not set Execution ready",
+        "Does not store writeRiskAcceptance as a waiver",
+        "Leaves the failed operation's evidence in the Adapter"
       ]
     },
     {
@@ -207,6 +209,57 @@
         "Shows and gets consent for the exact .gitignore addition",
         "Reports git rm --cached docs/agents/agent-hosts.local.yaml only when git ls-files proves that path is tracked",
         "Does not rewrite Git history"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Host profiles were certified against exact Orca 1.4.2 with no recipeFingerprint. This host now runs 1.5.0 and worker-start flags, readiness wait, start-receipt fields, and evidence mode still match. Refresh setup. An old wave is still active.",
+      "expected_output": "Migrates exact-version certification into recipeFingerprint provenance through setup, does not treat the version change alone as incompatibility, and leaves the active wave's frozen manifest untouched.",
+      "files": [],
+      "expectations": [
+        "Does not silently reinterpret the active wave",
+        "Recertifies or records a structured recipeFingerprint instead of keying on exact Orca version",
+        "Stores the certification-time Orca version in an explicitly named provenance field",
+        "Preserves prior launch evidence when the bounded capability and evidence checks still match",
+        "Continues when required capabilities still match"
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "The saved Coordinator full-handoff recipeFingerprint requires terminal wait --for tui-idle, but this Orca version no longer documents that wait. Refresh setup.",
+      "expected_output": "Treats the missing required capability as certification drift, recertifies or blocks the affected launch purpose, and does not keep the stale fingerprint.",
+      "files": [],
+      "expectations": [
+        "Detects a missing or changed required capability",
+        "Checks terminal create, terminal wait, and terminal send as the full-handoff pipeline",
+        "Does not keep the Coordinator purpose certified on the stale fingerprint",
+        "Does not fail merely because the Orca version string changed",
+        "Does not hash full help prose"
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "Existing projectPolicy.crossFamilyReview is different-family-from-worker and a prior wave recorded same-family-accepted-by-user. Migrate setup. I want both Worker and Reviewer on the same family.",
+      "expected_output": "Stores prefer-different-family, allows same-family review with no exception field, and does not rewrite the active wave's frozen policy.",
+      "files": [],
+      "expectations": [
+        "Migrates different-family-from-worker and same-family-accepted-by-user to prefer-different-family",
+        "Does not require a same-family exception to save the profiles",
+        "Does not add a provider or vendor independence gate",
+        "Leaves an active wave's frozen reviewerIndependence untouched"
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "Certify a Worker and Reviewer, but this harness exposes no reliable model-lineage metadata for the Reviewer.",
+      "expected_output": "Records the Reviewer family as unknown, certifies the otherwise valid profile, and preserves review independence through a separate read-only Reviewer Dispatch without a provider gate.",
+      "files": [],
+      "expectations": [
+        "Does not fail certification only because model family is unknown",
+        "Stores family as unknown rather than guessing a lineage",
+        "Does not require a same-family or unknown-family exception",
+        "Keeps the Reviewer in a separate read-only Dispatch with fresh context",
+        "Shows unknown at confirmation and records it in the final report"
       ]
     }
   ]

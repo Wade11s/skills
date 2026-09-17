@@ -11,6 +11,11 @@ contract is the Main Run return address in the handoff.
 
 Before `run-create`:
 
+An explicit resume of a pre-v5 wave follows the frozen-schema rule in
+[Failure and recovery](failure-and-recovery.md#resume). Interpret the checks
+below through that manifest rather than requiring P2 fields: step 3 applies its
+legacy write authority, and step 5 takes the pre-v5 profile branch.
+
 1. Read the handoff and immutable Wave Manifest. It is authoritative for the
    Tracker Adapter revision, role profiles, validation commands, worktree setup,
    publication mode, and parallel limit.
@@ -19,7 +24,8 @@ Before `run-create`:
 3. Read `docs/agents/issue-tracker.md` and
    [Tracker Adapter](tracker-adapter.md) before a tracker operation. Load the
    exact guide/transport configured there. Apply its write eligibility gate to
-   the manifest's certification and risk-acceptance snapshot before `run-create`.
+   the manifest's certification and phase-local write confirmation before
+   `run-create`. Do not re-ask for write confirmation.
 4. Resolve the Orca executable and load version-matched `orchestration`.
 5. Validate all profile IDs and launch purposes under
    [Profile gate and launch](profile-gate-and-launch.md).
@@ -97,17 +103,24 @@ the changed ticket in a new wave. Record every ticket's launch
 
 Apply the constraints in
 [Per-ticket assignment policy](profile-gate-and-launch.md#per-ticket-assignment-policy)
-in this order:
+in this order for schema 5. A pre-v5 resume first applies the legacy-policy
+branch in that authority and does not fall through to the P2 family preference.
 
 1. Honour an explicit manifest pin.
-2. Apply tier and family filters.
-3. Apply the configured assignment strategy.
-4. Apply concurrency limits, waiting when all valid entries are at capacity.
-5. Pin the pair for fix and re-review.
-6. Prefer an unused Reviewer for a requested clean-room pass.
-7. Record complexity and profile IDs in the Task and final report.
-8. Apply in-pool failover or escalate for a confirmed manifest revision.
-9. Use the integration bindings for integration-created state.
+2. Apply tier filters.
+3. Enforce concurrency limits; wait only when every eligible entry is at
+   capacity.
+4. Among entries with capacity, prefer a different-family Reviewer when both
+   families are known. Keep same-family and unknown-family entries eligible;
+   never wait for a busy different-family entry while another eligible entry is
+   free.
+5. Apply the configured assignment strategy within that candidate set.
+6. Pin the pair for fix and re-review.
+7. Prefer an unused Reviewer for a requested clean-room pass.
+8. Record complexity, profile IDs, and families or `unknown` in the Task and
+   final report.
+9. Apply in-pool failover or escalate for a confirmed manifest revision.
+10. Use the integration bindings for integration-created state.
 
 Read [Issue Worktree Loop](issue-worktree-loop.md) before implementation. Render
 Tasks from templates rather than asking each agent to rediscover contracts.
@@ -194,9 +207,13 @@ Send only `coordinator_ready`, `profile_mismatch`, `manifest_accepted`,
       "complexity": "simple",
       "assigned": {
         "worker": "w1",
+        "workerFamily": "<family or unknown>",
         "reviewer": "r2",
+        "reviewerFamily": "<family or unknown>",
         "integrationWorker": "iw1 or null",
-        "integrationReviewer": "ir1 or null"
+        "integrationWorkerFamily": "<family, unknown, or null>",
+        "integrationReviewer": "ir1 or null",
+        "integrationReviewerFamily": "<family, unknown, or null>"
       },
       "reviewedHead": "<sha>",
       "integratedCommit": "<sha>",
@@ -209,7 +226,7 @@ Send only `coordinator_ready`, `profile_mismatch`, `manifest_accepted`,
       "outcome": "submitted",
       "manifestVersion": 3,
       "complexity": "standard",
-      "assigned": {"worker": "w1", "reviewer": "r2"},
+      "assigned": {"worker": "w1", "workerFamily": "<family or unknown>", "reviewer": "r2", "reviewerFamily": "<family or unknown>"},
       "reviewedHead": "<sha>",
       "validatedCandidate": "<sha>",
       "publishedBranch": "<remote>/<branch>",
@@ -221,7 +238,7 @@ Send only `coordinator_ready`, `profile_mismatch`, `manifest_accepted`,
       "outcome": "blocked",
       "manifestVersion": 3,
       "complexity": "complex",
-      "assigned": {"worker": "w2", "reviewer": "r1"},
+      "assigned": {"worker": "w2", "workerFamily": "<family or unknown>", "reviewer": "r1", "reviewerFamily": "<family or unknown>"},
       "reason": "<blocker>",
       "trackerState": "<observed value>"
     }

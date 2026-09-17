@@ -83,6 +83,7 @@ than duplicating it in the Adapter:
 readiness:
   alignment: ready
   execution: ready
+  requiresWriteConfirmation: false
   dependencyEvidenceMode: adapter-readback
 ```
 
@@ -123,9 +124,11 @@ Never phrase that as full write certification.
 
 Before deriving phase readiness, apply the authoritative
 [write eligibility gate](../../orca-development-loop/references/tracker-adapter.md#write-eligibility-gate).
-Record the separate, scoped risk acceptance in the Adapter template when
-granted. Probe refusal alone leaves write-dependent phases blocked; setup may
-still save those blocked results.
+When writes are `declared-not-exercised` and the other gates pass, set
+`requiresWriteConfirmation: true` and keep the affected phases usable. Do not
+collect or persist a standing `writeRiskAcceptance` waiver. Probe refusal never
+marks writes `passed`. A failed or missing required write still blocks the
+affected phase; setup may save those blocked results.
 
 ## Existing configuration
 

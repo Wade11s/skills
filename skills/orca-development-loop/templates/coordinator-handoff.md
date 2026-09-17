@@ -55,7 +55,7 @@ Validation commands come from the Wave Manifest, which already resolved them.
 
 ## Completion
 
-Return one bounded `wave_done` report in the JSON shape from the Coordinator reference: Adapter revision, publication mode, every ticket's manifest version and outcome (`integrated`, `submitted`, `blocked`, or `abandoned`), main-advance evidence when applicable, reviewed/integrated commits or submitted PR/MR, validation, tracker readback, supported ancestor sweeps, cleanup state, and residual risks. Then idle so Main can close the top-level terminal.
+Return one bounded `wave_done` report in the JSON shape from the Coordinator reference: Adapter revision, publication mode, every ticket's manifest version and outcome (`integrated`, `submitted`, `blocked`, or `abandoned`), assigned profile IDs and families, main-advance evidence when applicable, reviewed/integrated commits or submitted PR/MR, validation, tracker readback, supported ancestor sweeps, cleanup state, and residual risks. Then idle so Main can close the top-level terminal.
 
 ## Coordinator skills
 

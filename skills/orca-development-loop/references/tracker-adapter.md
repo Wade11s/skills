@@ -30,9 +30,9 @@ repository instructions, Wave Manifest, or this lifecycle contract.
 
 ## Readiness and capability gates
 
-The setup manifest records Alignment and Execution readiness plus one
-dependency evidence mode: `adapter-readback`, `verified-alternate`, or
-`user-attestation-required`.
+The setup manifest records Alignment and Execution readiness,
+`requiresWriteConfirmation`, and one dependency evidence mode:
+`adapter-readback`, `verified-alternate`, or `user-attestation-required`.
 
 - Alignment requires verified reads and write eligibility under the gate below
   for the publish/classify/relate operations its manifest promises.
@@ -48,15 +48,26 @@ Alignment, Main, and Coordinator. The Wave Manifest defines its storage shape.
 1. Obtain each ticket's complete blocker set, including blockers outside the
    project and wave. Prefer certified Adapter readback, then a setup-verified
    alternate representation. A query that hides external blockers is incomplete.
-2. If neither representation is readable, obtain explicit user attestation per
-   ticket: the listed set is complete, no omitted dependency prevents starting,
-   and each blocker's current state and satisfaction are known. This applies to
-   a one-ticket wave and an empty blocker set too.
-3. Freeze source, observation time, completeness receipt, and each blocker's
-   reference/state/satisfaction in `tickets[].blockers`. For user attestation,
-   `confirmedByUserAt` must reference the exact confirmation.
+2. If neither representation is readable, keep named, hinted, or ambiguous
+   blockers ticket-specific: obtain explicit confirmation of each such ticket's
+   complete blocker details and current satisfaction before launch. Do not infer
+   an empty set from silence when ticket text or available metadata names or
+   hints at a dependency. Tickets whose proposed blocker set is empty may share
+   the existing Execution confirmation: the listed tickets have no known
+   omitted blocker preventing start. Freeze that confirmation reference into
+   each affected ticket. Do not prompt per ticket. A one-ticket wave uses that
+   same Execution confirmation; it is not an extra gate.
+3. Freeze source, observation time, completeness receipt, `attestationKind`, and
+   each blocker's reference/state/satisfaction in `tickets[].blockers`.
+   `attestationKind` is `not-required` for Adapter or alternate readback,
+   `ticket-specific` for named, hinted, or ambiguous blockers, and
+   `phase-empty-set` when empty sets share the phase confirmation.
+   `confirmedByUserAt` names that confirmation.
 4. Without complete evidence, launch no affected ticket. Alignment reports
-   `requiresBlockerAttestation` and keeps such tickets out of the frontier.
+   `requiresBlockerAttestation` for named, hinted, or ambiguous tickets and
+   reports proposed empty sets as pending `phase-empty-set` records with
+   `confirmedByUserAt: null`. Execution obtains the shared empty-set
+   confirmation; Alignment does not reuse its profile confirmation.
 5. An unsatisfied external blocker prevents dispatch. Exclude the ticket or
    report it blocked. An unsatisfied in-wave blocker waits for integration and
    tracker readback; every `inWave: true` reference resolves to a manifest ticket.
@@ -78,36 +89,38 @@ interchangeable. Apply this table to every phase that needs tracker writes:
 | `certification.writes` | Required action |
 |---|---|
 | `passed` | Writes are eligible, subject to the other readiness gates. |
-| `declared-not-exercised` | Block unless explicit, unrevoked user risk acceptance covers this Adapter revision, scope, phase, and every required write operation. |
-| `failed` or missing | Block; risk acceptance cannot waive a known failure or missing operation. |
+| `declared-not-exercised` | Conditionally eligible when required reads, exact commands, idempotency/ambiguous-write recovery, and all other phase gates pass. Setup records `requiresWriteConfirmation: true` and does not collect or persist a standing risk waiver. Readiness remains usable. |
+| `failed` or missing | Block; a confirmation cannot waive a known failure or missing required operation. |
 
-Setup asks separately whether the user accepts real work as the first write
-test. Declining a probe, continuing setup, or confirming a wave is not that
-acceptance. Store `unexercisedWritesAcceptedByUserAt` and its scope in the
-Adapter's `writeRiskAcceptance`; retain `writes: declared-not-exercised`.
-Required reads must still pass, write commands and ambiguous-write recovery
-must be verified from the transport guide, and every other phase gate must
-pass. Thus risk acceptance permits readiness; it does not prove certification.
-With no acceptance, save a usable draft with the affected phases `blocked`.
+At the existing Alignment or Execution confirmation, when
+`requiresWriteConfirmation` is true, show Adapter revision, scope, phase, and
+that real work may be the first exercised write. One explicit confirmation
+authorizes the configured Adapter operations needed by that confirmed phase.
+Freeze only that phase-local confirmation in the Alignment Task or Wave
+Manifest. Do not enumerate operations into a durable consent record, and do
+not re-check confirmation before every Run, Task, handoff, or write. Adapter
+revision, scope, or phase drift invalidates the confirmation through the
+normal Alignment Task or Wave Manifest drift rule.
 
-Before any Run/Task/handoff or write, runtime checks this gate even if stored
-readiness says `ready`. Main copies certification and the complete acceptance
-record into the Wave Manifest (or Alignment Task). The receiving agent checks
-that snapshot against the current Adapter revision, scope, and acceptance
-record. Missing, revoked, or mismatched acceptance stops the phase; return to
-setup rather than silently renewing consent. A revision or scope change
-invalidates the acceptance.
+Until the user gives that phase confirmation, an unexercised write is
+unauthorized. At the Execution Gate, tracker drift inspection is read-only;
+after confirmation, apply a proposed forward-safe correction, read it back, and
+then freeze the confirmation reference with the manifest.
 
-Before the first unexercised write, disclose the accepted risk and use only the
-listed operation and configured retry procedure. Resolve an ambiguous outcome
-using the same operation identifier and readback; never blindly repeat a write.
-On failure or unresolvable ambiguity, stop further writes, preserve evidence,
-and report the affected phase blocked. Successful readback proves only that
-operation; runtime does not promote the whole Adapter to `passed`. Setup owns
-recertification. Apply the same rule to unexercised worktree/review-link writes.
+Before the first unexercised write, use only the configured operation and retry
+procedure. Resolve an ambiguous outcome using the same operation identifier and
+readback; never blindly repeat a write. On failure or unresolvable ambiguity,
+stop further writes, preserve evidence, and report the affected phase blocked.
+Successful readback proves only that operation; runtime does not promote the
+whole Adapter to `passed`. Setup owns recertification. Apply the same rule to
+unexercised worktree/review-link writes.
 
 A missing operation is not permission to improvise with a provider CLI. Stop
 the affected phase and send the user to `/setup-orca-development-loop`.
+
+An already-active pre-v5 wave keeps the write authority frozen in its manifest,
+including an accepted legacy `writeRiskAcceptance`; do not retrofit or broaden
+it. New work uses the phase-local confirmation rule above.
 
 ## Canonical roles and complexity
 
@@ -137,9 +150,11 @@ readback:
 - observable acceptance criteria;
 - complexity representation.
 
-Correct a mismatch only when the Adapter certifies the write, the change is
-forward-safe, and user intent is unambiguous. Otherwise report it. Never change
-the configured primary tracker during a delivery request.
+Propose a correction only when the Adapter certifies the write, the change is
+forward-safe, and user intent is unambiguous. Apply it only after the Execution
+confirmation under the write eligibility gate, then read it back. Otherwise
+report it. Never change the configured primary tracker during a delivery
+request.
 
 ## Completion
 

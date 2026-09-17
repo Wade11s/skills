@@ -1,7 +1,7 @@
 # Wave Manifest Template
 
 ```yaml
-schemaVersion: 4
+schemaVersion: 5
 version: <positive integer; start at 1>
 supersedes: <prior version or null>
 revisionReason: <reason or null>
@@ -18,12 +18,7 @@ tracker:
   mode: <full|execution-only>
   codeReviewSurface: <provider or none>
   writesCertification: <passed|declared-not-exercised>
-  writeRiskAcceptance:
-    unexercisedWritesAcceptedByUserAt: <explicit message reference or null>
-    adapterRevision: <matching revision or null>
-    scope: <matching scope or null>
-    phases: [<accepted phases, or empty>]
-    operations: [<accepted write operation names, or empty>]
+  writeConfirmation: <this phase confirmation reference or null>
   dependencyEvidenceMode: <adapter-readback|verified-alternate|user-attestation-required>
 
 tickets:
@@ -32,9 +27,10 @@ tickets:
     blockers:
       source: <adapter-readback|verified-alternate|user-attestation-required>
       observedAt: <ISO timestamp or source message reference>
-      completenessEvidence: <readback/procedure output reference or user confirmation reference>
+      completenessEvidence: <readback/procedure output reference or confirmation reference>
       completeIncludingExternal: true
-      confirmedByUserAt: <source message reference or null>
+      attestationKind: <not-required|ticket-specific|phase-empty-set>
+      confirmedByUserAt: <shared phase confirmation, ticket-specific confirmation, or null>
       items:
         - ref: <blocking ticket reference>
           inWave: <true|false>
@@ -52,7 +48,7 @@ deliveryOrder:
 profilesSource:
   type: <docs/agents/agent-hosts.local.yaml|one-wave-override|mixed>
   hostKey: <Orca host key>
-  certifiedOrcaVersion: <version>
+  orcaVersionObservedAtFreeze: <provenance; not an equality gate>
   frozenAt: <timestamp>
 
 roleBindings:
@@ -66,14 +62,14 @@ profiles:
   <profile id>:
     agent: <Orca agent id>
     model: <exact id|inherit-agent-default>
-    family: <model lineage>
+    family: <model lineage|unknown>
     reasoning: {flag: <flag|none>, level: <level|none>}
     tiers: [<subset of simple, standard, complex, or empty for Coordinator>]
     maxConcurrent: <positive integer>
     headroomAtConfirmation: <observed value and source|unknown>
     launch:
-      supervised: <frozen structured recipe or null>
-      fullHandoff: <frozen structured recipe or null>
+      supervised: <frozen structured recipe including recipeFingerprint, or null>
+      fullHandoff: <frozen structured recipe including recipeFingerprint, or null>
     effectiveProfileEvidence:
       # Omit a launch purpose not used by this profile.
       supervised:
@@ -87,7 +83,7 @@ profiles:
       supervised:
         status: <passed|pending-runtime-launch|not-required>
         hostKey: <same host key>
-        orcaVersion: <version>
+        orcaVersionObservedAtCertification: <provenance>
         certifiedAt: <timestamp or null>
         requestedEffectiveMatch: <true|false|null>
         lifecycleCompleted: <true|false|null>
@@ -95,7 +91,7 @@ profiles:
       fullHandoff:
         status: <passed|pending-runtime-launch|not-required>
         hostKey: <same host key>
-        orcaVersion: <version>
+        orcaVersionObservedAtCertification: <provenance>
         certifiedAt: <timestamp or null>
         requestedEffectiveMatch: <true|false|null>
         repositoryUnchanged: <true|false|null>
@@ -126,7 +122,8 @@ policies:
   contextRetention: retain-through-integration-with-delta-tasks
   maxIncrementalReReviews: <configured positive integer>
   maxParallelTickets: <configured positive integer>
-  reviewerIndependence: <different-family-from-worker|same-family-accepted-by-user>
+  reviewerIndependence: separate-read-only-dispatch
+  reviewerFamilyPreference: prefer-different-family
   assignment:
     strategy: <most-headroom-then-round-robin|round-robin|pinned>
     stickyPerTicket: true
@@ -145,6 +142,17 @@ Freeze `mode`, `remote`, `pullRequestCreateCommand`, and
 
 Populate the frozen `tickets[].blockers` and `deliveryOrder` shape under the
 [blocker evidence contract](../references/tracker-adapter.md#blocker-evidence-contract).
+Empty unreadable blocker sets share `attestationKind: phase-empty-set` and the
+same `confirmedByUserAt` as this Execution confirmation.
+
+## Write confirmation
+
+Derive the requirement from `writesCertification` under the
+[write eligibility gate](../references/tracker-adapter.md#write-eligibility-gate):
+use `writeConfirmation: null` for `passed`, and store only the Execution
+confirmation reference for `declared-not-exercised`. Adapter revision and scope
+already live in `tracker`; the manifest itself defines the Execution phase. Do
+not store `writeRiskAcceptance` or a duplicate consent object.
 
 ## Self-contained profiles
 

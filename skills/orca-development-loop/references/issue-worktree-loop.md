@@ -46,7 +46,7 @@ Before review dispatch, the Coordinator's boundary is metadata-only: lifecycle I
 
 1. Pin the review base and exact implementation head.
 2. Create the read-only Review Task immediately after metadata checks.
-3. Launch a fresh Reviewer terminal in the same Issue Worktree using this ticket's pinned Reviewer entry, whose family differs from the Worker's.
+3. Launch a fresh Reviewer terminal in the same Issue Worktree using this ticket's pinned Reviewer entry. Never reuse the Worker's terminal or context as the Reviewer.
 4. Give that Reviewer the Task rendered from the Reviewer template.
 5. Require the **Reviewer Agent** to load and execute the repository `code-review` protocol or another explicitly confirmed review protocol.
 6. The Reviewer reports a process outcome and a separate verdict. There is no Coordinator-generated verdict and no direct implementation-to-integration transition.
@@ -57,7 +57,7 @@ outcome=succeeded + verdict=REQUEST_CHANGES
 outcome=failed    + review could not be completed
 ```
 
-Review independence comes from a fresh role session, fixed comparison points, and read-only authority rather than another checkout.
+Review independence comes from a separate read-only Reviewer Dispatch with fresh review context, fixed comparison points, and the existing evidence/verdict contract, not from model family and not from another checkout.
 
 ## Fix and re-review
 

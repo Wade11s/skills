@@ -156,6 +156,9 @@ Before completion, account for every approved ticket:
 - unresolved tickets carry an appropriate non-ready role;
 - launchability and `requiresBlockerAttestation` follow the
   [blocker evidence contract](tracker-adapter.md#blocker-evidence-contract);
+- under `user-attestation-required`, proposed empty blocker sets are reported as
+  pending `phase-empty-set` records with `confirmedByUserAt: null`; the later
+  Execution confirmation owns the shared confirmation;
 - no duplicate was created for existing feedback.
 
 ## Completion report
@@ -176,6 +179,7 @@ Send one `worker_done` through the injected lifecycle command with this body:
         "observedAt": "<ISO timestamp or source reference>",
         "completenessEvidence": "<readback receipt/reference>",
         "completeIncludingExternal": true,
+        "attestationKind": "not-required",
         "confirmedByUserAt": null,
         "items": []
       }

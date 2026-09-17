@@ -32,15 +32,27 @@ of Main's context.
 
 Before bootstrapping a Run or touching a ticket:
 
+For an explicit resume of an already-active pre-v5 wave, require its frozen Wave
+Manifest, compare only the current project, host, and tracker identity with that
+snapshot, then follow [Failure and recovery](references/failure-and-recovery.md).
+For an explicit abort, use the frozen ownership records to stop affected work
+even when setup has drifted, and perform no tracker write. In both cases, use
+the frozen legacy profile, write, blocker, and reviewer rules; skip the
+current-schema checklist below and add no work.
+
+For new work or a current-schema wave:
+
 1. Read `docs/agents/orca-development-loop.md`.
 2. If it is absent, has an unsupported schema, contains placeholders, or points
    at a missing document, tell the user to run
-   `/setup-orca-development-loop`, then stop. The only exception is an explicit
-   resume or abort of an already-active legacy wave that still has its frozen
-   Wave Manifest; finish or stop that wave without creating new work.
-3. Resolve the Orca executable once and compare the current Orca project, host,
-   and CLI/runtime version with the manifest and the matching entry in
-   `docs/agents/agent-hosts.local.yaml`.
+   `/setup-orca-development-loop`, then stop.
+3. Resolve the Orca executable once and compare the current Orca project and
+   host with the manifest and the matching entry in
+   `docs/agents/agent-hosts.local.yaml`. Apply
+   [capability compatibility](references/profile-gate-and-launch.md#capability-compatibility)
+   to this phase's selected entries. A version change alone does not invalidate
+   certification; report the newly observed version. A missing or changed
+   required capability is setup drift.
 4. Read `docs/agents/issue-tracker.md` and perform its bounded read-only
    integration check. A temporarily unavailable integration is an operational
    failure; an identity, capability, or transport mismatch is setup drift. Do
@@ -48,8 +60,10 @@ Before bootstrapping a Run or touching a ticket:
 5. Require `readiness.alignment: ready` for a new Alignment phase and
    `readiness.execution: ready` for delivery. An execution-only Adapter may
    deliver existing tickets but may not publish Alignment output. Recheck the
-   [write eligibility gate](references/tracker-adapter.md#write-eligibility-gate);
-   a stored `ready` value alone does not authorize unexercised writes.
+   [write eligibility gate](references/tracker-adapter.md#write-eligibility-gate):
+   `failed` or a missing required operation still blocks; `declared-not-exercised`
+   stays usable when `requiresWriteConfirmation` is true and the existing phase
+   confirmation will cover it.
 6. Require a Git workspace for Execution because this loop's acceptance,
    review, and integration evidence is commit-based. A folder-only setup may
    still support Alignment.
@@ -133,7 +147,11 @@ Require Alignment readiness, then read
    Request. A fresh session cannot dereference Main's conversation history.
 2. Select, revalidate, and confirm the Alignment profile through
    [Profile gate and launch](references/profile-gate-and-launch.md).
-3. Inline the confirmation and certified launch recipe in the Alignment Task.
+   When `requiresWriteConfirmation` is true, this same confirmation is the
+   Alignment write confirmation under the
+   [write eligibility gate](references/tracker-adapter.md#write-eligibility-gate).
+3. Inline the confirmation, certified launch recipe, `recipeFingerprint`, and
+   any phase-local write confirmation in the Alignment Task.
 4. Create the supervised Task before launching or attaching the fresh Alignment
    terminal.
 5. Apply the configured receipt, attestation, or user-attested evidence rule
@@ -172,10 +190,10 @@ Run the **Execution Gate** before generating a handoff:
    cancelled, and unresolved tickets.
 3. Apply the [blocker evidence contract](references/tracker-adapter.md#blocker-evidence-contract)
    to determine launchability, scheduling, and frozen evidence.
-4. Audit tracker drift in one bounded sweep using the Adapter's inspect and
-   readback operations. Correct only forward-safe changes supported by the
-   write eligibility gate and documented write contract; otherwise report the
-   mismatch.
+4. Audit tracker drift read-only in one bounded sweep using the Adapter's inspect
+   and readback operations. Propose forward-safe corrections supported by the
+   write eligibility gate and documented write contract; make no tracker write
+   before the Execution confirmation.
 5. Read exact worktree setup and validation commands from
    `docs/agents/environment.md`. Missing or fake commands are setup drift, not
    an invitation to guess.
@@ -184,15 +202,22 @@ Run the **Execution Gate** before generating a handoff:
    and readback commands from the code-review surface in
    `docs/agents/issue-tracker.md`.
 7. Resolve ticket complexity from the configured representation and default.
-8. Present the assignments, capacity, headroom, and evidence required by
+8. Present the assignments, capacity, headroom, actual Worker/Reviewer families,
+   and evidence required by
    [Per-phase confirmation](references/profile-gate-and-launch.md#per-phase-confirmation)
-   using `docs/agents/agent-hosts.local.yaml`.
+   using `docs/agents/agent-hosts.local.yaml`. Apply the write eligibility and
+   blocker evidence contracts at this same confirmation: unexercised writes and
+   unreadable empty blocker sets share this Execution confirmation; named,
+   hinted, or ambiguous blockers stay ticket-specific.
 9. Show the publication mode and exact authorized remote/branch flow.
-10. Wait for explicit user confirmation, then freeze tickets, blocker evidence,
-    delivery order, tracker Adapter revision, validation, publication, policy,
-    role bindings, and a self-contained definition including
-    `effectiveProfileEvidence` for every referenced profile in the
-    [Wave Manifest](templates/wave-manifest.md).
+10. Wait for explicit user confirmation. Apply any confirmed forward-safe
+    tracker corrections through the Adapter and read them back. If readback
+    materially changes the proposed wave, stop and reconfirm.
+11. Freeze tickets, blocker evidence, delivery order, tracker Adapter revision,
+    the phase-local write confirmation reference, validation, publication,
+    policy, role bindings, and a self-contained definition including
+    `effectiveProfileEvidence` and `recipeFingerprint` for every referenced
+    profile in the [Wave Manifest](templates/wave-manifest.md).
 
 The state transition is:
 
@@ -271,10 +296,11 @@ Coordinator Run. Follow the stall ladder instead of waiting indefinitely.
 
 A wave is complete only when `wave_done` accounts for every ticket as
 `integrated`, `submitted`, `blocked`, or `abandoned`, including its
-`manifestVersion`, reviewed/integrated commits or submitted PR/MR, main-advance
-evidence when applicable, post-integration validation, tracker readback,
-supported ancestor sweeps, settled Dispatches, terminal/worktree disposition,
-Adapter evidence, and residual risks.
+`manifestVersion`, assigned profile IDs and families, reviewed/integrated
+commits or submitted PR/MR, main-advance evidence when applicable,
+post-integration validation, tracker readback, supported ancestor sweeps,
+settled Dispatches, terminal/worktree disposition, Adapter evidence, and
+residual risks.
 
 After accepting it, close the top-level Coordinator terminal by its stored
 handle, then acknowledge the complete Main Run mail batch. `worker-release` does

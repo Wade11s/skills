@@ -67,14 +67,16 @@
     {
       "id": 6,
       "prompt": "Deliver ITEM-101 then ITEM-102. The configured dependency mode is user-attestation-required because neither the tracker nor an alternate representation can be read. I gave you the order, but ITEM-101 may also depend on an external ITEM-90.",
-      "expected_output": "Refuses to treat ordering as blocker evidence and requires a complete per-ticket blocker attestation including ITEM-90 and its satisfaction before any launch.",
+      "expected_output": "Refuses to treat ordering as blocker evidence, requires ticket-specific confirmation of ITEM-101's complete blocker details including ITEM-90, and inspects ITEM-102 before sharing the Execution confirmation if its proposed set is empty.",
       "files": [],
       "expectations": [
         "Separates AFK-ready role from launchability",
         "Does not accept ITEM-101 then ITEM-102 as proof of blocker completeness",
-        "Requires the complete blocker set for every ticket, including external blockers",
-        "Requires ITEM-90's current satisfaction and an exact user confirmation reference",
-        "Freezes the exact user confirmation as completeness evidence",
+        "Requires ITEM-101's complete blocker set, including external blockers",
+        "Requires ITEM-90's current satisfaction and a ticket-specific user confirmation reference",
+        "Inspects ITEM-102 for named or hinted dependencies rather than inferring emptiness from silence",
+        "If ITEM-102's proposed set is empty, uses the shared Execution confirmation instead of an extra per-ticket prompt",
+        "Freezes the applicable ticket-specific or shared confirmation as completeness evidence",
         "Excludes a ticket whose external blocker is unsatisfied",
         "Creates no Coordinator handoff before the evidence is complete"
       ]
@@ -107,14 +109,15 @@
     },
     {
       "id": 9,
-      "prompt": "ITEM-103's pinned worker provider is exhausted, but another certified Worker profile in the manifest pool is available.",
-      "expected_output": "Fails over inside the confirmed pool while preserving tier and cross-family review constraints.",
+      "prompt": "A schema 5 wave is running. ITEM-103's pinned worker provider is exhausted, but another certified Worker profile in the manifest pool is available.",
+      "expected_output": "Fails over inside the confirmed pool while preserving tier and concurrency limits and preferring a different-family Reviewer when one remains.",
       "files": [],
       "expectations": [
         "Requires no new confirmation for in-pool failover",
         "Records the provider error and substitution",
         "Respects maxConcurrent and ticket tier",
-        "Keeps the Reviewer family different",
+        "Prefers a different-family Reviewer when a compatible pool entry has capacity",
+        "Does not block same-family review and requires no family exception",
         "Stops for confirmation if only an out-of-pool option remains"
       ]
     },
@@ -267,7 +270,10 @@
       "expectations": [
         "Does not migrate the active wave",
         "Does not add tickets or profiles",
+        "Skips the current setup readiness, mutable host-profile, recipeFingerprint, and phase-local write-confirmation checklist",
         "Uses the frozen tracker and profile facts for the existing wave",
+        "Does not require recipeFingerprint, phase-local write confirmation, attestationKind, or prefer-different-family when the legacy manifest predates schema 5",
+        "Honors different-family-from-worker as the frozen legacy hard filter or same-family choices only within already frozen bindings under same-family-accepted-by-user",
         "Requires /setup-orca-development-loop before a later new wave"
       ]
     },
@@ -280,7 +286,7 @@
         "Includes c1, w1, r1, iw1, and ir1 exactly once in the profile dictionary",
         "Includes exact agent, model, reasoning, family, maxConcurrent, current headroom, launch recipes, and certification for iw1 and ir1",
         "Binds integrationWorker to iw1 and integrationReviewer to ir1 by ID",
-        "Validates the Integration Reviewer family against the profile producing integration state",
+        "Prefers an Integration Reviewer from a different family than the profile producing integration state when one is available",
         "Rejects the manifest if any referenced ID or required launch purpose is missing",
         "Does not require the Coordinator to read docs/agents/agent-profiles.md after handoff"
       ]
@@ -288,33 +294,36 @@
     {
       "id": 23,
       "prompt": "Deliver only ITEM-130. Its configured dependency mode is user-attestation-required, so assume a one-ticket wave has no blockers.",
-      "expected_output": "Rejects the assumption and asks the user to attest ITEM-130's complete blocker set, including external dependencies and their satisfaction.",
+      "expected_output": "Rejects the one-ticket assumption, inspects ticket text and metadata for named or hinted dependencies, and if the proposed set is empty uses the existing Execution confirmation rather than an extra per-ticket gate.",
       "files": [],
       "expectations": [
         "Does not treat one ticket as implicitly blocker-free",
-        "Requires an explicit complete-set attestation even when the set is empty",
-        "Requires external blocker states when any are named",
-        "Freezes the user confirmation reference as completeness evidence before launch"
+        "Does not infer an empty set from silence when ticket text or metadata names or hints at a dependency",
+        "Uses the existing Execution confirmation for an unreadable empty set rather than a separate extra gate",
+        "Freezes that same confirmation reference as completeness evidence before launch"
       ]
     },
     {
       "id": 24,
-      "prompt": "Setup says Execution is ready, but tracker writes are declared-not-exercised and writeRiskAcceptance is absent. Start the wave.",
-      "expected_output": "Stops at the write eligibility gate before Run, Task, handoff or tracker write despite stored readiness.",
+      "prompt": "Setup says Execution is ready with requiresWriteConfirmation true. Tracker writes are declared-not-exercised and no writeRiskAcceptance record exists. Start the wave.",
+      "expected_output": "Treats unexercised writes as conditionally eligible, covers them at the existing Execution confirmation, and freezes only that phase-local confirmation.",
       "files": [],
       "expectations": [
-        "Does not interpret wave confirmation as write-risk acceptance",
-        "Returns to setup for explicit scoped acceptance or certification",
-        "Launches no Coordinator"
+        "Does not require a durable writeRiskAcceptance or per-operation consent ratchet",
+        "Shows Adapter revision, scope, phase, and that real work may be the first exercised write",
+        "One Execution confirmation authorizes the configured Adapter operations for that phase",
+        "Keeps tracker drift inspection read-only until confirmation, then reads any confirmed forward-safe correction back before freezing the manifest",
+        "Does not re-check write consent before every later Run, Task, handoff, or write",
+        "Does not mark writes passed"
       ]
     },
     {
       "id": 25,
-      "prompt": "Execution write risk was accepted for rev-7 and project P. The Adapter is now rev-8. Can we reuse acceptance? Also consider a first accepted write that times out with an unknown outcome.",
-      "expected_output": "Rejects stale acceptance; for a separately valid acceptance, resolves ambiguous writes with the same identifier and readback rather than blind retries.",
+      "prompt": "Execution writes were confirmed under Adapter rev-7 and project P. The Adapter is now rev-8. Also consider a first confirmed write that times out with an unknown outcome.",
+      "expected_output": "Treats Adapter revision drift as ordinary manifest or task drift; for a still-valid phase confirmation, resolves ambiguous writes with the same identifier and readback rather than blind retries.",
       "files": [],
       "expectations": [
-        "Blocks rev-8 without renewed scoped acceptance",
+        "Invalidates the frozen writeConfirmation through Adapter revision drift rather than a per-operation consent re-check",
         "Does not retry a new create after an ambiguous result",
         "Stops further writes if ambiguity remains",
         "Does not promote whole-Adapter certification after one successful operation"
@@ -370,6 +379,81 @@
         "Does not require a harness-native attestation command",
         "Inlines the receipt-verified profile for the Alignment Agent",
         "The Alignment Agent performs no second profile probe"
+      ]
+    },
+    {
+      "id": 30,
+      "prompt": "Start Alignment. The host profile was certified on Orca 1.4.2 with a matching recipeFingerprint, and this host now runs Orca 1.5.0. worker-start flags, readiness wait, start-receipt fields, and evidence mode are unchanged.",
+      "expected_output": "Continues with the certified recipe, reports the newly observed Orca version, and does not treat the version change as setup drift.",
+      "files": [],
+      "expectations": [
+        "Does not send the user to setup solely because the Orca version changed",
+        "Performs one bounded recipeFingerprint compatibility check for the selected Alignment entry",
+        "Reports the newly observed version at confirmation",
+        "Keeps provider/model evidence rules unchanged"
+      ]
+    },
+    {
+      "id": 31,
+      "prompt": "Start Execution. The frozen Worker recipeFingerprint requires worker-start --effort and launch.effective, but this Orca version's guide no longer documents --effort or launch.effective.",
+      "expected_output": "Reports setup drift for the missing required capability and creates no Coordinator handoff.",
+      "files": [],
+      "expectations": [
+        "Treats a missing or changed required capability as setup drift",
+        "Does not continue merely because host identity still matches",
+        "Does not hash full help prose or fail on unrelated CLI additions",
+        "Names /setup-orca-development-loop"
+      ]
+    },
+    {
+      "id": 32,
+      "prompt": "Setup says Execution is ready, but certification.writes is failed and lifecycleWrite is missing. Confirm the wave anyway.",
+      "expected_output": "Blocks Execution. Phase confirmation cannot waive a failed or missing required write.",
+      "files": [],
+      "expectations": [
+        "Does not treat requiresWriteConfirmation or wave confirmation as a waiver",
+        "Leaves writes failed or missing blocked",
+        "Launches no Coordinator",
+        "Sends the user to /setup-orca-development-loop"
+      ]
+    },
+    {
+      "id": 33,
+      "prompt": "Deliver ITEM-150, ITEM-151, and ITEM-152. Dependency mode is user-attestation-required. ITEM-150 and ITEM-151 have empty proposed blocker sets and no named or hinted dependencies. ITEM-152's description mentions it may wait on ITEM-90.",
+      "expected_output": "Shares one Execution confirmation across the empty-set tickets, freezes that same reference into each, and keeps ITEM-152 blocked until ticket-specific blocker details and satisfaction are known.",
+      "files": [],
+      "expectations": [
+        "Does not prompt separately per empty-set ticket",
+        "Does not reuse an earlier Alignment profile confirmation; Alignment leaves proposed empty sets pending",
+        "Sets attestationKind phase-empty-set on ITEM-150 and ITEM-151 with the shared confirmation reference",
+        "Keeps ITEM-152 in requiresBlockerAttestation as ticket-specific",
+        "Does not infer ITEM-152's set is empty from silence",
+        "Does not treat delivery order as completeness evidence"
+      ]
+    },
+    {
+      "id": 34,
+      "prompt": "Assign ITEM-160. The only confirmed Reviewer with capacity is the same family as the Worker. A different-family Reviewer exists but is at maxConcurrent. Start the wave.",
+      "expected_output": "Prefers the different-family Reviewer when it has capacity, but here proceeds with same-family independent review, shows both families at confirmation, and records them in the final report without a family exception.",
+      "files": [],
+      "expectations": [
+        "Prefers a different-family Reviewer when a compatible confirmed entry has capacity",
+        "Allows same-family review with no same-family-accepted-by-user field",
+        "Dispatches a separate read-only Reviewer with fresh review context",
+        "Never reuses the Worker's terminal or context as the Reviewer",
+        "Shows actual Worker and Reviewer families at confirmation and in wave_done"
+      ]
+    },
+    {
+      "id": 35,
+      "prompt": "Start Execution with a pre-created-terminal Worker. Its saved recipeFingerprint covers terminal create and terminal wait, but the current guide no longer supports attaching that terminal through orchestration worker-start --terminal.",
+      "expected_output": "Detects that the certified launch pipeline is incomplete or incompatible, reports setup drift, and creates no Coordinator handoff.",
+      "files": [],
+      "expectations": [
+        "Checks every command in the pre-created supervised pipeline, including worker-start --terminal",
+        "Does not accept terminal creation and readiness alone as a launch certification",
+        "Treats the missing attach capability as setup drift rather than a version-string mismatch",
+        "Creates no Coordinator handoff and names /setup-orca-development-loop"
       ]
     }
   ]

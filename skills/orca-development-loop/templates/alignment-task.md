@@ -10,12 +10,12 @@ Shape the user's feature, feedback, or bug into a verified manifest in the confi
 - Model: `<exact model identifier>`
 - Reasoning: `<thinking or effort level>`
 - User confirmation: `<timestamp or Main message reference>`
-- Certified launch recipe: `<structured recipe from the current host profile>`
+- Certified launch recipe: `<structured recipe including recipeFingerprint from the current host profile>`
 - Effective-profile evidence: render `receipt`, `attestation`, or
   `user-attested`
 - Runtime verification: render the receipt values, attestation command, or
   exact user-confirmed argv plus limitation
-- Tracker write eligibility: `<Adapter revision, certification, and complete writeRiskAcceptance snapshot or null>`
+- Tracker write eligibility: `<Adapter revision, scope, certification.writes, and phase-local confirmation reference or null>`
 
 Render exactly one evidence instruction:
 

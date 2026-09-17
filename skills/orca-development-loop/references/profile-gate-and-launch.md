@@ -6,21 +6,91 @@ runtime revalidates and assigns already user-confirmed entries.
 
 ## Stored configuration
 
-Read project policy from `docs/agents/agent-profiles.md`, then select the exact
-host key named by the setup manifest from
-`docs/agents/agent-hosts.local.yaml`. Require:
+For an explicit resume or abort of a pre-v5 wave, use the profiles, role
+bindings, launch purposes, and recipes frozen in that manifest. Do not read
+mutable profile configuration or require the current schema or
+`recipeFingerprint`; add no ticket or profile.
+
+For new work or a current-schema wave, read project policy from
+`docs/agents/agent-profiles.md`, then select the exact host key named by the
+setup manifest from `docs/agents/agent-hosts.local.yaml`. Require:
 
 - understood schema;
 - current Orca project/host identity;
-- a compatible Orca CLI/runtime version;
 - setup certification for every proposed profile's actual launch purpose;
+- a capability-compatible `recipeFingerprint` for each selected launch purpose,
+  per
+  [Capability compatibility](#capability-compatibility);
 - complete role bindings and launch recipes;
 - project complexity and assignment policy.
 
 A missing local host file or host entry, unsupported schema, stale launch
-recipe, or changed Orca capability is setup drift. Stop and ask for
-`/setup-orca-development-loop` instead of scanning the machine for replacement
-models.
+recipe, or missing or changed required capability is setup drift. An Orca
+version change alone is not. Stop and ask for `/setup-orca-development-loop`
+instead of scanning the machine for replacement models.
+
+## Capability compatibility
+
+Store the Orca version observed during certification as provenance, not as an
+equality gate. Certification is keyed by host, agent, model, reasoning, launch
+purpose, launch mode, and the launch-purpose `recipeFingerprint`.
+
+Each certified launch purpose stores one canonical structured fingerprint of
+the command surface and receipt/evidence fields that recipe needs:
+
+```yaml
+recipeFingerprint:
+  launchMode: <worker-start|precreated-terminal>
+  commands:
+    - command: <exact Orca subcommand>
+      requiredFlags: [<flag names the recipe uses>]
+      incompatibleFlagSets: [[<mutually exclusive flags>]]
+  readinessSignal: <tui-idle|none>
+  startReceiptFields: [<receipt fields the evidence rule reads>]
+  evidenceMode: <receipt|attestation|user-attested>
+```
+
+Record one `commands` entry for every command the launch pipeline runs. A
+composed supervised launch covers `orchestration worker-start`. A pre-created
+supervised launch covers `terminal create`, `terminal wait`, and the
+`orchestration worker-start --terminal` attach. A full handoff covers `terminal
+create`, `terminal wait`, and `terminal send`. Do not hash help prose or include
+unrelated CLI additions.
+
+For example, a composed launch with an explicit model stores:
+
+```yaml
+recipeFingerprint:
+  launchMode: worker-start
+  commands:
+    - command: orchestration worker-start
+      requiredFlags: [task, worktree, agent, model, effort, run, json]
+      incompatibleFlagSets:
+        - [agent, terminal]
+        - [terminal, model]
+        - [terminal, effort]
+  readinessSignal: none
+  startReceiptFields: [launch.requested, launch.effective]
+  evidenceMode: receipt
+```
+
+For the selected entries, perform one bounded, directional compatibility check
+against the current version-matched guide: every command and required flag still
+exists; the rendered invocation violates none of the current incompatible flag
+sets; and each readiness signal, start-receipt field, and evidence mode still
+exists. New optional flags and relaxed incompatibilities are irrelevant. If
+every capability the stored recipe needs remains valid, continue and report the
+newly observed Orca version. A removed requirement or a new conflict among the
+recipe's required flags is setup drift. Provider/model evidence rules are
+unchanged.
+
+A launch-purpose certification without `recipeFingerprint` is the exact-version
+form. Do not silently reinterpret it; send new work to
+`/setup-orca-development-loop`.
+For resume or abort of an already-active pre-v5 wave, honor that manifest's
+frozen certification, write authority, blocker evidence, and reviewer policy
+without requiring P2 fields. Add no ticket or profile; a later new wave requires
+setup.
 
 ## Cheap revalidation
 
@@ -31,7 +101,14 @@ Check only entries this phase may launch:
 3. one bounded account/auth check succeeds, or its recorded user vouch remains
    valid until a real launch disproves it;
 4. current headroom is read once when a usage source exists;
-5. family, tier coverage, and `maxConcurrent` satisfy the proposed assignment.
+5. the selected launch-purpose `recipeFingerprint` remains capability-compatible;
+6. tier coverage and `maxConcurrent` satisfy the proposed assignment; when both
+   Worker and Reviewer families are known, apply the different-family
+   preference without blocking same-family or unknown-family review.
+
+For a pre-v5 resume, perform items 1-4 and the tier/concurrency portion of item
+6 against the frozen legacy profile. Skip item 5 and apply the manifest's legacy
+reviewer policy below.
 
 Current headroom is never loaded from either profile file. With no usage source,
 record it as `unknown` and say so at confirmation; unknown is not unlimited.
@@ -46,31 +123,48 @@ candidate follows the one-wave override below.
 
 Resolve every role binding and ticket pin through the Wave Manifest's frozen
 profile dictionary; a pin must also belong to its corresponding role binding.
-Filter by complexity tier, require Worker and Reviewer families to differ unless
-the manifest records the user's exception, and enforce each profile's
-`maxConcurrent`. Apply the configured assignment strategy; for
-`most-headroom-then-round-robin`, prefer current headroom and break ties by least
-recently assigned. Keep the selected pair sticky through fix and re-review, and
-prefer a previously unused Reviewer for a requested clean-room pass.
 
-Integration-created state uses only `roleBindings.integrationWorker` and
-`roleBindings.integrationReviewer`, and its Reviewer differs in family from the
-profile that produced that state unless the same-family exception is recorded.
-Fail over only within the confirmed binding to an entry that still satisfies
-tier, family, and concurrency policy, and record the provider error and
-substitution. No out-of-pool profile is an automatic fallback.
+For a pre-v5 resume, honor the frozen legacy reviewer policy exactly:
+`different-family-from-worker` remains a hard family filter, while
+`same-family-accepted-by-user` permits same-family choices only within the role
+bindings already frozen in that manifest. Do not reinterpret either value as
+the P2 preference.
+
+For schema 5, filter by complexity tier and enforce each profile's
+`maxConcurrent`. Prefer a Reviewer from a different family when both families
+are known and a compatible confirmed entry has capacity. Same-family or
+unknown-family review needs no user exception and does not block execution.
+Family may be recorded as `unknown`; do not add a provider or vendor gate.
+Independence comes from a separate read-only Reviewer Dispatch with fresh review
+context and the existing fixed-point, evidence, and verdict contract; never
+reuse the Worker's terminal or context as the Reviewer. Apply the configured
+assignment strategy; for `most-headroom-then-round-robin`, prefer current
+headroom and break ties by least recently assigned. Keep the selected pair
+sticky through fix and re-review, and prefer a previously unused Reviewer for a
+requested clean-room pass.
+
+For schema 5, integration-created state uses only
+`roleBindings.integrationWorker` and
+`roleBindings.integrationReviewer`. Prefer an Integration Reviewer from a
+different family than the profile that produced that state when both families
+are known and a compatible confirmed entry has capacity; same-family or
+unknown-family review needs no exception. Fail over only within the confirmed
+binding to an entry that still satisfies tier and concurrency policy, preferring
+a different family among entries with capacity, and record the provider error
+and substitution. No out-of-pool profile is an automatic fallback.
 
 ## Per-phase confirmation
 
 Setup certification removes rediscovery, not user confirmation.
 
-For Alignment, show the one configured profile, effective headroom, and launch
-mode. For Execution, show role bindings/pools, ticket tier coverage,
-Worker/Reviewer families, each entry's `maxConcurrent`,
-`maxParallelTickets`, and the resulting maximum live Dispatch count.
-Whenever a selected entry uses `user-attested` evidence, also state that its
-exact argv was user-confirmed but provider/model cannot be independently
-observed.
+For Alignment, show the one configured profile, effective headroom, launch
+mode, and the certification-time versus current Orca versions. For Execution,
+show role bindings/pools, ticket tier coverage, the actual Worker and Reviewer
+families or `unknown`, each entry's `maxConcurrent`, `maxParallelTickets`, and
+the resulting maximum live Dispatch count. Same-family and unknown-family review
+need no exception. Whenever a selected entry uses `user-attested` evidence, also
+state that its exact argv was user-confirmed but provider/model cannot be
+independently observed.
 
 Wait for explicit confirmation before creating a Task, handoff, or terminal.
 Ticket, Adapter, validation, or profile changes invalidate confirmation.
@@ -84,7 +178,8 @@ Before generating the Coordinator handoff:
 2. Copy each complete definition into the Wave Manifest's `profiles`
    dictionary: exact agent/model/reasoning, family, tier coverage,
    `maxConcurrent`, current headroom, effective-profile evidence, launch
-   recipes, and certification facts.
+   recipes including `recipeFingerprint`, and certification facts including
+   the Orca version observed at certification as provenance.
 3. Store role pools and integration assignments under `roleBindings` as IDs
    into that dictionary.
 4. Require the dictionary keys to equal the unique referenced IDs and validate
@@ -105,9 +200,9 @@ repository configuration.
 
 When the user explicitly supplies an out-of-pool profile, validate only that
 candidate using the bounded static checks above: agent/model/reasoning
-acceptance, auth, family, and launch expressiveness. Record it in this Wave
-Manifest's profile dictionary, bind the affected role to its ID, and set
-`profilesSource.type` to `one-wave-override` or `mixed`; do not edit the
+acceptance, auth, family metadata or `unknown`, and launch expressiveness. Record
+it in this Wave Manifest's profile dictionary, bind the affected role to its ID,
+and set `profilesSource.type` to `one-wave-override` or `mixed`; do not edit the
 repository profile files.
 
 Do not create a setup Probe Run during delivery. The real role launch is the
@@ -116,8 +211,8 @@ override's launch test: apply the bounded evidence rule before allowing work.
 purpose that role will use. If replacement is needed after Coordinator startup,
 use the confirmed manifest-revision channel rather than an informal wait.
 
-Never invent or recommend an override on the user's behalf. A same-family
-review override requires a separate explicit decision in the manifest.
+Never invent or recommend an override on the user's behalf. Same-family or
+unknown-family review needs no extra exception field.
 
 For a running wave, Main delivers an override only as the next user-confirmed
 manifest version through `--type handoff --subject manifest_revision
@@ -164,8 +259,18 @@ as structured values until rendering and use the version-matched guide for
 quoting on the current platform.
 
 The top-level Coordinator uses its certified full-handoff recipe, not
-`worker-start`: create a fresh current-checkout terminal, wait for readiness,
-send the handoff, and stop monitoring inner work.
+`worker-start`:
+
+```text
+ORCA terminal create --worktree <current-checkout> \
+  --command <rendered argv> --json
+ORCA terminal wait --terminal <handle> --for tui-idle \
+  --timeout-ms <bounded> --json
+ORCA terminal send --terminal <handle> --text <handoff> \
+  --enter --wait-submit <bounded-seconds> --json
+```
+
+After the send receipt, stop monitoring inner work.
 
 ## Alignment launch order
 
@@ -191,8 +296,11 @@ send the handoff, and stop monitoring inner work.
 3. reclaim or fence residual resources before another attempt;
 4. use `worker-start --retry-of` for an authoritative retry, repeating placement
    and profile fields;
-5. fail over only to another confirmed pool entry satisfying tier and family
-   policy.
+5. fail over only to another confirmed pool entry satisfying tier and
+   concurrency policy. For schema 5, prefer a different family when both
+   families are known and one remains. For a pre-v5 resume, reapply the
+   manifest's frozen legacy reviewer policy before any Reviewer substitution;
+   `different-family-from-worker` remains a hard filter.
 
 An out-of-pool substitute requires the confirmed manifest-revision channel for
 not-yet-launched work. Continue under the accepted version until the Coordinator

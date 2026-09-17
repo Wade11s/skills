@@ -13,7 +13,7 @@ Expected profile:
 - Model: `<model or configured default>`
 - Reasoning: `<flag and level>`
 - Host: `<Orca host key>`
-- Orca version: `<version>`
+- Orca version: `<provenance>`
 - Effective-profile evidence: `<receipt|attestation|user-attested>`
 
 Do not read or modify product files, run repository commands, create workers,

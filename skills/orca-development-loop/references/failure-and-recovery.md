@@ -85,7 +85,10 @@ To resume:
    Manifest there. If it is gone, re-run the complete Execution Gate and get
    fresh user confirmation instead of inferring parameters from running
    terminals.
-5. Reconcile each ticket through the Wave Manifest's Tracker Adapter plus its worktree `HEAD` before dispatching anything new.
+5. When the recovered manifest predates schema 5, use only its frozen
+   certification, write authority, blocker evidence, and reviewer policy. Do not
+   require P2 fields, add tickets or profiles, or migrate the wave in place.
+6. Reconcile each ticket through the Wave Manifest's Tracker Adapter plus its worktree `HEAD` before dispatching anything new.
 
 If the current integration identity or Adapter revision differs from the Wave Manifest, preserve the wave and report setup drift. Do not migrate an active wave or switch providers during recovery.
 

@@ -6,7 +6,7 @@ Seed for committed `docs/agents/agent-profiles.md`. It stores only shared
 project routing policy and names the local host-profile file.
 
 ```yaml
-schemaVersion: 3
+schemaVersion: 4
 hostProfilesFile: docs/agents/agent-hosts.local.yaml
 
 projectPolicy:
@@ -28,7 +28,7 @@ projectPolicy:
   assignment:
     strategy: most-headroom-then-round-robin
     stickyPerTicket: true
-    crossFamilyReview: different-family-from-worker
+    crossFamilyReview: prefer-different-family
     escalationPrefersUnusedEntry: true
     maxParallelTickets: <positive integer>
     maxIncrementalReReviews: 2
@@ -41,13 +41,13 @@ host-specific, user-supplied profiles and certified launch recipes, never
 credentials or current headroom.
 
 ```yaml
-schemaVersion: 1
+schemaVersion: 2
 hosts:
   <Orca host key>:
     identity:
       label: <human-readable host>
       os: <macos|linux|windows>
-    orcaVersion: <certified CLI/runtime version>
+    orcaVersionObservedAtCertification: <provenance>
     certifiedAt: <ISO timestamp>
 
     roleBindings:
@@ -66,7 +66,7 @@ hosts:
           reasoning:
             flag: <--effort|--thinking|other|none>
             level: <exact level|none>
-        family: <model lineage>
+        family: <model lineage|unknown>
         tiers: [<subset of simple, standard, complex>]
         maxConcurrent: <positive integer>
         launch:
@@ -77,10 +77,35 @@ hosts:
             model: <model id or null>
             effort: <level or null>
             argv: [<exact argv entries, or use an empty list>]
+            recipeFingerprint:
+              launchMode: <worker-start|precreated-terminal>
+              # Include one entry for every command in the launch pipeline.
+              commands:
+                - command: <exact Orca subcommand>
+                  requiredFlags: [<flag names the recipe uses>]
+                  incompatibleFlagSets: [[<mutually exclusive flags>]]
+              readinessSignal: <tui-idle|none>
+              startReceiptFields: [<receipt fields the evidence rule reads>]
+              evidenceMode: <receipt|attestation|user-attested>
           fullHandoff:
             # Use null when this profile is not bound to Coordinator.
             mode: precreated-terminal
             argv: [<exact argv entries>]
+            recipeFingerprint:
+              launchMode: precreated-terminal
+              commands:
+                - command: terminal create
+                  requiredFlags: [worktree, command, json]
+                  incompatibleFlagSets: []
+                - command: terminal wait
+                  requiredFlags: [terminal, for, timeout-ms, json]
+                  incompatibleFlagSets: []
+                - command: terminal send
+                  requiredFlags: [terminal, text, enter, wait-submit, json]
+                  incompatibleFlagSets: []
+              readinessSignal: tui-idle
+              startReceiptFields: []
+              evidenceMode: <attestation|user-attested>
         effectiveProfileEvidence:
           # Omit a launch purpose not used by this profile.
           supervised:
@@ -97,7 +122,7 @@ hosts:
           supervised:
             status: <passed|failed|not-required>
             hostKey: <same host key>
-            orcaVersion: <same version>
+            orcaVersionObservedAtCertification: <provenance>
             certifiedAt: <ISO timestamp or null>
             requestedEffectiveMatch: <true|false|null>
             lifecycleCompleted: <true|false|null>
@@ -105,7 +130,7 @@ hosts:
           fullHandoff:
             status: <passed|failed|not-required>
             hostKey: <same host key>
-            orcaVersion: <same version>
+            orcaVersionObservedAtCertification: <provenance>
             certifiedAt: <ISO timestamp or null>
             requestedEffectiveMatch: <true|false|null>
             repositoryUnchanged: <true|false|null>
