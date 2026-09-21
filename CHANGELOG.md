@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-19
+
+- [Update]: probe-free Orca setup + replace section-by-section approval and mandatory synthetic profile probes with one decision packet, one write confirmation, static recipe fingerprints, and bounded first-real-launch verification.
+- [Update]: normalized host profile pools + lift shared defaults, Orca pipelines, launcher argv/evidence, and role bindings out of per-profile records while keeping Wave Manifests self-contained.
+
 ## 2026-09-17
 
 - [Fix]: durable base advancement + serialize tickets with a main-advance lock, verify the durable checkout before a fast-forward merge, and use compare-and-swap only when the base ref is checked out nowhere.

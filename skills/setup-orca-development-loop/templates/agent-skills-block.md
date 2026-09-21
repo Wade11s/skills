@@ -30,7 +30,7 @@ This repository uses a <single-context|multi-context> domain-doc layout. See
 
 Worktree setup and validation tiers are recorded in
 `docs/agents/environment.md`; shared routing policy is in
-`docs/agents/agent-profiles.md`, and this host's gitignored role profiles are in
-`docs/agents/agent-hosts.local.yaml`.
+`docs/agents/agent-profiles.md`, and this host's gitignored normalized profile
+pool is in `docs/agents/agent-hosts.local.yaml`.
 ```
 

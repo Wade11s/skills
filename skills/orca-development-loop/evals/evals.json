@@ -35,7 +35,7 @@
         "Does not reject GitHub because it is not Linear",
         "Uses operation templates from docs/agents/issue-tracker.md",
         "Reads validation only from docs/agents/environment.md",
-        "Uses user-supplied certified profiles",
+        "Uses user-supplied configured profiles and materializes normalized host entries when needed",
         "Freezes the Adapter revision in the Wave Manifest",
         "Freezes complete definitions for every role-bound profile"
       ]
@@ -447,13 +447,44 @@
     {
       "id": 35,
       "prompt": "Start Execution with a pre-created-terminal Worker. Its saved recipeFingerprint covers terminal create and terminal wait, but the current guide no longer supports attaching that terminal through orchestration worker-start --terminal.",
-      "expected_output": "Detects that the certified launch pipeline is incomplete or incompatible, reports setup drift, and creates no Coordinator handoff.",
+      "expected_output": "Detects that the configured launch pipeline is incomplete or incompatible, reports setup drift, and creates no Coordinator handoff.",
       "files": [],
       "expectations": [
         "Checks every command in the pre-created supervised pipeline, including worker-start --terminal",
-        "Does not accept terminal creation and readiness alone as a launch certification",
+        "Does not accept terminal creation and readiness alone as a complete launch recipe",
         "Treats the missing attach capability as setup drift rather than a version-string mismatch",
         "Creates no Coordinator handoff and names /setup-orca-development-loop"
+      ]
+    },
+    {
+      "id": 36,
+      "prompt": "Start Execution with setup schema 5 and legacy host schema 3. Every selected profile has a capability-compatible recipeFingerprint and status pending-runtime-launch; no synthetic setup probe was run.",
+      "expected_output": "Treats the profiles as configured, shows the pending first-launch status at phase confirmation, freezes it into the Wave Manifest, and lets each real role launch supply bounded evidence before work.",
+      "files": [],
+      "expectations": [
+        "Does not send the user back to setup merely because status is pending-runtime-launch",
+        "Performs no setup-style Probe Run or model catalog discovery",
+        "Freezes the exact recipeFingerprint, evidence mode, and pending status",
+        "Requires receipt, attestation, or exact user-attested argv on each actual launch before work",
+        "Removes a failed pending candidate from the phase and uses only configured in-pool failover",
+        "Reports setup drift if every configured candidate for a required role fails"
+      ]
+    },
+    {
+      "id": 37,
+      "prompt": "Start Execution from normalized host schema 4. Host defaults provide all tiers and maxConcurrent 2. Worker w1 and Reviewer r1 reference different launchers but the same supervised pipeline; Coordinator c1 uses the same Pi launcher and a fullHandoff pipeline. Profiles contain only launcher/model/reasoning/family and no recipeFingerprint, effectiveProfileEvidence, verification, or certification blocks.",
+      "expected_output": "Resolves role-bound profiles through defaults, launchers, and purpose-specific pipelines; validates each unique catalog entry once; materializes only selected profiles into the self-contained Wave Manifest; and uses real launches as bounded evidence.",
+      "files": [],
+      "expectations": [
+        "Accepts schema 4 without requiring per-profile recipeFingerprint or certification fields",
+        "Merges tiers and maxConcurrent from host defaults",
+        "Validates the shared supervised pipeline once even though Worker and Reviewer both use it",
+        "Validates each referenced launcher once and renders only whole-token model/reasoning placeholders",
+        "Requires Coordinator to resolve a fullHandoff pipeline and other roles to resolve supervised",
+        "Derives pending-runtime-launch only in each materialized profile",
+        "Freezes rendered argv, expanded recipeFingerprint, evidence, and resolved routing values",
+        "Does not copy host defaults, launcher/pipeline catalogs, unreferenced profiles, or operational history into the Wave Manifest",
+        "Reports setup drift on a missing reference, purpose mismatch, or unresolved placeholder"
       ]
     }
   ]

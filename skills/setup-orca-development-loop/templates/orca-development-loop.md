@@ -4,7 +4,7 @@ Seed for `docs/agents/orca-development-loop.md`. Keep detailed values in the
 documents this manifest points at; this file is the runtime readiness interface.
 
 ```yaml
-schemaVersion: 4
+schemaVersion: 5
 configuredAt: <ISO timestamp>
 configuredBy: setup-orca-development-loop
 
@@ -27,11 +27,11 @@ documents:
   profiles: docs/agents/agent-profiles.md
   hostProfiles: docs/agents/agent-hosts.local.yaml
 
-certifications:
+setupEvidence:
   trackerReads: <passed|failed>
   trackerWrites: <passed|declared-not-exercised|failed>
-  profiles: <passed|partial|failed>
-  worktreeSetup: <passed|failed>
+  profileRecipes: <static-validated|failed>
+  worktreeSetup: <passed|runtime-deferred|failed>
 ```
 
 `alignment: blocked` plus `execution: ready` is the execution-only mode. A
@@ -45,4 +45,12 @@ and the phase remains usable. Do not store `writeRiskAcceptance`.
 
 Interpret `dependencyEvidenceMode` under the
 [blocker evidence contract](issue-tracker.md#blocker-evidence-contract).
+
+`profileRecipes: static-validated` means every role-bound schema 4 profile
+resolves through host defaults, one launcher, and a compatible purpose-specific
+pipeline. Runtime derives `pending-runtime-launch` only in the materialized
+Alignment/Wave profile, and the real launch applies bounded evidence.
+`worktreeSetup: runtime-deferred` is usable only when an exact setup policy and
+command are present; the first Issue Worktree runs them before agent work.
+Known failures remain blocked.
 

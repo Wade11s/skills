@@ -2,7 +2,8 @@
 
 Load this reference before the first tracker operation in Alignment or
 Execution. `docs/agents/issue-tracker.md` is the repository-specific Adapter:
-it maps this normalized contract to exact, setup-certified commands.
+it maps this normalized contract to exact, setup-configured and read-validated
+commands.
 
 This reference remains the runtime authority; setup also renders
 repository-local copies of the blocker evidence and write eligibility contracts

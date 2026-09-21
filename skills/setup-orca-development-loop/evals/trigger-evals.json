@@ -6,6 +6,7 @@
   {"query": "we moved this configured repository to another Orca host; certify the profiles here", "should_trigger": true},
   {"query": "change the primary work tracker used by our Orca development loop", "should_trigger": true},
   {"query": "our Orca version changed and the saved agent launch recipes need recertification", "should_trigger": true},
+  {"query": "normalize the duplicated profile and launch fields in agent-hosts.local.yaml", "should_trigger": true},
   {"query": "start delivering ITEM-101 through the configured Orca loop", "should_trigger": false},
   {"query": "shape this fuzzy feature into executable tickets", "should_trigger": false},
   {"query": "spawn one supervised Codex worker and wait for it", "should_trigger": false},

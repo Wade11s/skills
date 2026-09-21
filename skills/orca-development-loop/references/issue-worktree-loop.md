@@ -6,7 +6,8 @@ One mutation owner holds it at a time: the active Writer, or the Coordinator whi
 
 ## Validation tiers
 
-The Wave Manifest carries the setup-certified command sets from `docs/agents/environment.md`:
+The Wave Manifest carries the exact setup-configured command sets from
+`docs/agents/environment.md`:
 
 - **fast tier**: the Worker's development inner loop, run before every commit;
 - **full suite**: the build/test gate for `worker_done`, reported in the payload with the change-specific runtime checks;
@@ -28,6 +29,12 @@ Before implementation:
 - confirm the worktree has one mutation owner and no unrelated terminal;
 - link the worktree through the Adapter when that operation is configured;
 - render a Worker Task with this ticket's pinned Worker entry, the manifest's validation commands, and the communication contract.
+
+When `workspace.setupEvidence` is `runtime-deferred`, this first real Issue
+Worktree is the setup test. Capture the command result before creating a Worker
+Dispatch. On failure, create no agent, preserve the exact evidence, settle the
+worktree, and report setup drift to Main. A successful run authorizes this
+worktree; it does not require a separate synthetic setup probe.
 
 ## Implementation
 

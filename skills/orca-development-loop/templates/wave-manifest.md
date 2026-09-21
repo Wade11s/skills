@@ -79,7 +79,7 @@ profiles:
         mode: <attestation|user-attested>
         command: <exact read-only command or null>
     certification:
-      source: <setup|one-wave-override>
+      source: <legacy-setup|host-schema-4|one-wave-override>
       supervised:
         status: <passed|pending-runtime-launch|not-required>
         hostKey: <same host key>
@@ -109,8 +109,8 @@ publication:
 validation:
   source: <docs/agents/environment.md plus fingerprint>
   workingDirectory: <repository-relative path>
-  fastTier: <exact command>
-  fullSuite: <exact command>
+  fastTier: <exact command or accepted none>
+  fullSuite: <exact command or accepted none>
   repoSpecific:
     - <exact command, or use an empty list>
   sharedCoreModules:
@@ -159,7 +159,12 @@ not store `writeRiskAcceptance` or a duplicate consent object.
 Populate the frozen `profiles`, `roleBindings`, and ticket-pin shape through
 [Freeze a self-contained profile catalog](../references/profile-gate-and-launch.md#freeze-a-self-contained-profile-catalog).
 
-Copy setup-certified and current-wave facts into the YAML shape above.
+For normalized host schema 4, materialize only referenced profiles through host
+defaults, launchers, and purpose-specific pipelines; do not copy those catalogs
+or unreferenced profiles. Legacy setup and one-wave overrides already provide a
+materialized definition. `pending-runtime-launch` requires the actual role
+launch to apply bounded evidence before work and does not require a synthetic
+setup probe.
 
 `schemaVersion` identifies this template's shape; `version` counts the
 confirmed revisions of one wave. They change independently.

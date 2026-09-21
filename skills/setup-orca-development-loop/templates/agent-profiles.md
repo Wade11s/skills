@@ -34,104 +34,92 @@ projectPolicy:
     maxIncrementalReReviews: 2
 ```
 
-## Local host profiles
+## Local host profile pool
 
-Seed for gitignored `docs/agents/agent-hosts.local.yaml`. It stores
-host-specific, user-supplied profiles and certified launch recipes, never
-credentials or current headroom.
+Seed for gitignored `docs/agents/agent-hosts.local.yaml`. Schema 4 normalizes
+shared launch mechanics instead of copying them into every profile:
+
+- `pipelines` own Orca command capabilities;
+- `launchers` own agent argv construction and effective-profile evidence;
+- `profiles` contain only model-specific values and optional routing overrides;
+- `roleBindings` select profiles.
 
 ```yaml
-schemaVersion: 2
+schemaVersion: 4
 hosts:
   <Orca host key>:
     identity:
       label: <human-readable host>
       os: <macos|linux|windows>
-    orcaVersionObservedAtCertification: <provenance>
-    certifiedAt: <ISO timestamp>
+
+    recipeSurface:
+      orcaVersionObserved: <provenance, not an equality gate>
+      checkedAt: <ISO timestamp>
+
+    defaults:
+      tiers: [simple, standard, complex]
+      maxConcurrent: <positive integer>
 
     roleBindings:
-      alignment: [<profile id>]
-      coordinator: [<profile id>]
+      alignment: <one profile id>
+      coordinator: <one profile id>
       workerPool: [<profile ids>]
       reviewerPool: [<profile ids>]
-      integrationWorker: [<profile id or inherited qualified ids>]
-      integrationReviewer: [<profile id or inherited qualified ids>]
+      integrationWorker: [<profile ids>]
+      integrationReviewer: [<profile ids>]
+
+    pipelines:
+      <pipeline id>:
+        purpose: <supervised|fullHandoff>
+        mode: <worker-start|precreated-terminal>
+        commands:
+          - command: <exact Orca subcommand>
+            requiredFlags: [<flag names used by this pipeline>]
+            incompatibleFlagSets: [[<mutually exclusive flags>]]
+        readinessSignal: <tui-idle|none>
+        startReceiptFields: [<receipt fields read by this pipeline>]
+
+    launchers:
+      <launcher id>:
+        agent: <Orca agent id>
+        # Required only for precreated-terminal pipelines. Placeholders must be
+        # complete array elements; {reasoning} immediately follows its flag.
+        argvTemplate: ["<executable>", "--model", "{model}", "--reasoning-flag", "{reasoning}"]
+        evidence:
+          mode: <receipt|attestation|user-attested>
+          command: <one read-only command or null>
+        pipelines:
+          supervised: <compatible supervised pipeline id>
+          # Omit unsupported purposes.
+          fullHandoff: <compatible fullHandoff pipeline id>
 
     profiles:
       <profile id>:
-        suppliedByUser:
-          agent: <Orca agent id>
-          model: <exact model id|inherit-agent-default>
-          reasoning:
-            flag: <--effort|--thinking|other|none>
-            level: <exact level|none>
+        launcher: <launcher id>
+        model: <exact model id|inherit-agent-default>
+        reasoning: <exact level|none>
         family: <model lineage|unknown>
+        # Omit either field to inherit host defaults.
         tiers: [<subset of simple, standard, complex>]
         maxConcurrent: <positive integer>
-        launch:
-          supervised:
-            # Use null when this profile is not bound to a supervised role.
-            mode: <worker-start|precreated-terminal>
-            agent: <agent id or null>
-            model: <model id or null>
-            effort: <level or null>
-            argv: [<exact argv entries, or use an empty list>]
-            recipeFingerprint:
-              launchMode: <worker-start|precreated-terminal>
-              # Include one entry for every command in the launch pipeline.
-              commands:
-                - command: <exact Orca subcommand>
-                  requiredFlags: [<flag names the recipe uses>]
-                  incompatibleFlagSets: [[<mutually exclusive flags>]]
-              readinessSignal: <tui-idle|none>
-              startReceiptFields: [<receipt fields the evidence rule reads>]
-              evidenceMode: <receipt|attestation|user-attested>
-          fullHandoff:
-            # Use null when this profile is not bound to Coordinator.
-            mode: precreated-terminal
-            argv: [<exact argv entries>]
-            recipeFingerprint:
-              launchMode: precreated-terminal
-              commands:
-                - command: terminal create
-                  requiredFlags: [worktree, command, json]
-                  incompatibleFlagSets: []
-                - command: terminal wait
-                  requiredFlags: [terminal, for, timeout-ms, json]
-                  incompatibleFlagSets: []
-                - command: terminal send
-                  requiredFlags: [terminal, text, enter, wait-submit, json]
-                  incompatibleFlagSets: []
-              readinessSignal: tui-idle
-              startReceiptFields: []
-              evidenceMode: <attestation|user-attested>
-        effectiveProfileEvidence:
-          # Omit a launch purpose not used by this profile.
-          supervised:
-            mode: <receipt|attestation|user-attested>
-            command: <exact read-only command or null>
-          fullHandoff:
-            mode: <attestation|user-attested>
-            command: <exact read-only command or null>
-        verification:
-          authProbe: <ready|not-ready|inconclusive>
-          smokeTest: <passed|failed|not-run>
-          vouchedByUserAt: <timestamp/reference or null>
-        certification:
-          supervised:
-            status: <passed|failed|not-required>
-            hostKey: <same host key>
-            orcaVersionObservedAtCertification: <provenance>
-            certifiedAt: <ISO timestamp or null>
-            requestedEffectiveMatch: <true|false|null>
-            lifecycleCompleted: <true|false|null>
-            repositoryUnchanged: <true|false|null>
-          fullHandoff:
-            status: <passed|failed|not-required>
-            hostKey: <same host key>
-            orcaVersionObservedAtCertification: <provenance>
-            certifiedAt: <ISO timestamp or null>
-            requestedEffectiveMatch: <true|false|null>
-            repositoryUnchanged: <true|false|null>
 ```
+
+Store only role-bound profiles and the pipelines/launchers they reference. The
+pipeline definition is the canonical command-surface fingerprint; do not copy
+it under profiles. A launcher may support several purposes and profiles.
+
+For a pre-created terminal, render `argvTemplate` by replacing only complete
+`{model}` and `{reasoning}` tokens with the selected profile values. Do not use
+shell interpolation. Define another launcher when fixed flags or evidence
+differ. For `worker-start`, omit `argvTemplate`; the runtime materializes
+`agent`, `model`, and reasoning directly.
+
+The required launch purpose comes from the role: Alignment, Worker, Reviewer,
+and both Integration roles use `supervised`; Coordinator uses `fullHandoff`.
+Missing launcher/pipeline references block that role.
+
+Do not store per-profile copies of host key, Orca version, pipeline commands,
+evidence mode, unused-purpose nulls, `not-required` records, smoke logs,
+certification history, amendment prose, terminal/Task/Dispatch IDs, credentials,
+or current headroom. Runtime verifies every real launch and freezes the
+materialized selected profiles into the Alignment record or Wave Manifest.

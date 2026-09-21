@@ -10,7 +10,8 @@ Shape the user's feature, feedback, or bug into a verified manifest in the confi
 - Model: `<exact model identifier>`
 - Reasoning: `<thinking or effort level>`
 - User confirmation: `<timestamp or Main message reference>`
-- Certified launch recipe: `<structured recipe including recipeFingerprint from the current host profile>`
+- Materialized launch recipe: `<structured recipe resolved from host profile, launcher, and supervised pipeline, including recipeFingerprint>`
+- Launch status: `<passed|pending-runtime-launch>`
 - Effective-profile evidence: render `receipt`, `attestation`, or
   `user-attested`
 - Runtime verification: render the receipt values, attestation command, or
@@ -27,6 +28,10 @@ Render exactly one evidence instruction:
   escalation, perform no requirement work, and idle.
 - `user-attested`: run no profile probe. State that the exact argv above was
   user-confirmed and provider/model cannot be independently observed.
+
+`pending-runtime-launch` changes no evidence rule: this real Alignment start is
+the lifecycle test. Proceed only after its receipt, attestation, or exact argv
+matches.
 
 ## Initial request
 

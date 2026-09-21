@@ -4,38 +4,39 @@
     {
       "id": 1,
       "prompt": "I just imported this repository into Orca. Configure everything needed for the development loop. Orca shows one connected work tracker.",
-      "expected_output": "Inspects the repository and Orca read-only, prechecks the sole integration, proposes it as the primary tracker, and asks one section at a time before any write.",
+      "expected_output": "Inspects the repository and Orca in one bounded read-only pass, adopts the sole eligible tracker, and asks one decision packet before one final write confirmation.",
       "files": [],
       "expectations": [
         "Does not ask the user to run setup-matt-pocock-skills",
         "Discovers Orca integrations before selecting a tracker",
         "Does not infer the tracker from the Git remote",
-        "Performs no tracker write or agent launch without separate consent",
+        "Performs no tracker write, agent launch, Run, Task, terminal, or disposable worktree on the default path",
+        "Collects every unresolved choice in one decision packet instead of asking section by section",
         "Plans all seven docs/agents outputs, the .gitignore addition, and one root Agent skills update"
       ]
     },
     {
       "id": 2,
       "prompt": "This GitHub repository uses Linear for tickets and GitHub for pull requests. Both integrations are visible in Orca. Set up the loop.",
-      "expected_output": "Separates the primary work tracker from the code-review surface, recommends Linear for work and GitHub for review, then certifies only the chosen tracker Adapter.",
+      "expected_output": "Separates the primary work tracker from the code-review surface, recommends Linear for work and GitHub for review, then validates the chosen Adapter read-only.",
       "files": [],
       "expectations": [
         "Does not choose GitHub Issues merely from the remote",
         "Records one primary work tracker",
         "Records GitHub separately as the code-review surface",
         "Runs read-only eligibility checks before recommendation",
-        "Runs full certification only after user confirmation"
+        "Records writes as declared-not-exercised by default and performs no synthetic tracker write"
       ]
     },
     {
       "id": 3,
       "prompt": "This repo already has docs/agents files from setup-matt-pocock-skills, including GitHub Issues. Adopt what is still valid and migrate it for Orca.",
-      "expected_output": "Treats existing configuration as a preference, reconciles it with Orca integration facts, previews a complete migration, and writes only after confirmation.",
+      "expected_output": "Treats existing configuration as a preference, reconciles it with Orca facts, previews one complete migration summary with file deltas, and writes only after the final confirmation.",
       "files": [],
       "expectations": [
         "Preserves valid domain and triage decisions",
         "Validates the existing tracker integration before adopting it",
-        "Does not overwrite old files before showing the complete draft",
+        "Does not overwrite old files before showing the migration summary and compact diffs",
         "Creates the Orca setup manifest and environment/profile documents",
         "Updates the existing root Agent skills block in place"
       ]
@@ -82,27 +83,27 @@
     {
       "id": 7,
       "prompt": "Use these exact profiles: Codex model X high for workers and Claude model Y high for reviewers. Verify them in Orca before saving.",
-      "expected_output": "Validates only the supplied candidates, requests consent for a Probe Run, and certifies each unique launch recipe through a no-edit lifecycle Task.",
+      "expected_output": "Recognizes the explicit pre-save verification request, statically configures only the supplied candidates, then requests consent for targeted deep diagnostics of those named purposes.",
       "files": [],
       "expectations": [
         "Does not replace the user-supplied models",
-        "Checks agent, model, reasoning, auth, family, and launch expressiveness",
+        "Checks the agent command surface, exact model/reasoning expression, family, and launch expressiveness without catalog enumeration",
         "Explains model quota and Orca resource side effects before launching",
-        "Requires the configured effective-profile evidence and exactly one worker_done",
-        "Stores a recipeFingerprint per launch purpose and Orca version as provenance",
+        "Uses the targeted profile-launch diagnostic and requires exactly one worker_done for each explicitly requested supervised purpose",
+        "Stores the shared pipeline once and keeps diagnostic results out of the profile pool",
         "Verifies repository state is unchanged and safely disposes probe resources"
       ]
     },
     {
       "id": 8,
       "prompt": "My Pi reviewer profile needs custom CLI arguments that worker-start cannot express. Certify it.",
-      "expected_output": "Uses the custom-argv path: structured argv, terminal creation, bounded TUI readiness, then supervised worker-start on the existing terminal.",
+      "expected_output": "Uses the custom-argv path for this explicitly requested deep diagnostic: structured argv, terminal creation, bounded TUI readiness, then supervised worker-start on the existing terminal.",
       "files": [],
       "expectations": [
         "Stores argv as structured values rather than an interpolated shell string",
         "Waits for tui-idle before injection",
         "Uses worker-start --terminal for lifecycle ownership",
-        "Fingerprints terminal create, terminal wait, and the worker-start --terminal attach with their required and incompatible flags",
+        "Stores terminal create, terminal wait, and worker-start --terminal once in a supervised pipeline",
         "Uses a harness-native attestation",
         "Does not treat dispatch --inject as supervised ownership"
       ]
@@ -124,14 +125,14 @@
     {
       "id": 10,
       "prompt": "This repo is already configured on my laptop, but I just imported it on a second Orca host. Refresh only what is host-specific.",
-      "expected_output": "Preserves committed project policy and the Tracker Adapter, adds or updates one entry in gitignored docs/agents/agent-hosts.local.yaml, and certifies launch recipes for this host with recipeFingerprint provenance.",
+      "expected_output": "Uses the host-only fast path: preserves committed policy and the Tracker Adapter, adds one normalized schema 4 host pool, validates each referenced pipeline/launcher once, and defers launch evidence to real use.",
       "files": [],
       "expectations": [
         "Keeps shared policy in docs/agents/agent-profiles.md and host entries in docs/agents/agent-hosts.local.yaml",
         "Adds docs/agents/agent-hosts.local.yaml to .gitignore with consent",
-        "Does not inherit another host's launch certification",
+        "Does not inherit another host's recipe-surface validation without rechecking it",
         "Preserves tracker, domain, complexity, and assignment policy unless drift is found",
-        "Revalidates worktree setup and current-host profiles",
+        "Stores shared defaults, pipelines, and launchers once and keeps derived pending-runtime-launch out of the pool",
         "Does not store credentials or current headroom"
       ]
     },
@@ -143,7 +144,7 @@
       "expectations": [
         "Reads existing setup before asking",
         "Does not duplicate the Agent skills block",
-        "Does not rerun tracker writes or profile probes when certifications remain valid",
+        "Does not rerun tracker writes or profile diagnostics when existing evidence remains valid",
         "Reports the existing Alignment and Execution readiness"
       ]
     },
@@ -175,13 +176,13 @@
     {
       "id": 14,
       "prompt": "Certify this custom-argv harness profile. The harness documents no command that reports its effective provider or model, but I confirm this exact argv.",
-      "expected_output": "Records user-attested effective-profile evidence with the exact argv, states the observability limitation, exercises the launch lifecycle, and allows certification to proceed.",
+      "expected_output": "Because the user explicitly requested certification, records user-attested evidence, states the limitation, and exercises only this named launch purpose through a targeted diagnostic.",
       "files": [],
       "expectations": [
-        "Uses effectiveProfileEvidence mode user-attested with command null",
-        "Stores the exact user-confirmed argv as structured values",
+        "Stores user-attested evidence with command null once on the launcher",
+        "Stores the exact argv pattern as structured template tokens and materializes the confirmed argv",
         "Does not invent an attestation command or inspect process environments",
-        "Sets requestedEffectiveMatch to null while still exercising launch lifecycle and cleanup",
+        "Exercises launch lifecycle and cleanup without writing requestedEffectiveMatch or diagnostic history into the pool",
         "Requires the provider/model limitation at every later profile confirmation"
       ]
     },
@@ -214,25 +215,25 @@
     {
       "id": 17,
       "prompt": "Host profiles were certified against exact Orca 1.4.2 with no recipeFingerprint. This host now runs 1.5.0 and worker-start flags, readiness wait, start-receipt fields, and evidence mode still match. Refresh setup. An old wave is still active.",
-      "expected_output": "Migrates exact-version certification into recipeFingerprint provenance through setup, does not treat the version change alone as incompatibility, and leaves the active wave's frozen manifest untouched.",
+      "expected_output": "Migrates exact-version profile records into shared schema 4 pipelines and launchers, derives runtime pending status without probing, and leaves the active wave untouched.",
       "files": [],
       "expectations": [
         "Does not silently reinterpret the active wave",
-        "Recertifies or records a structured recipeFingerprint instead of keying on exact Orca version",
-        "Stores the certification-time Orca version in an explicitly named provenance field",
-        "Preserves prior launch evidence when the bounded capability and evidence checks still match",
+        "Stores a named pipeline definition instead of per-profile fingerprints or exact-version gates",
+        "Stores the current recipe-surface Orca version once as provenance",
+        "Removes prior certification history from the profile pool while preserving the active wave",
         "Continues when required capabilities still match"
       ]
     },
     {
       "id": 18,
       "prompt": "The saved Coordinator full-handoff recipeFingerprint requires terminal wait --for tui-idle, but this Orca version no longer documents that wait. Refresh setup.",
-      "expected_output": "Treats the missing required capability as certification drift, recertifies or blocks the affected launch purpose, and does not keep the stale fingerprint.",
+      "expected_output": "Treats the missing required capability as pipeline drift, updates the one shared full-handoff pipeline when a valid path exists or blocks it, and does not retain stale per-profile copies.",
       "files": [],
       "expectations": [
         "Detects a missing or changed required capability",
         "Checks terminal create, terminal wait, and terminal send as the full-handoff pipeline",
-        "Does not keep the Coordinator purpose certified on the stale fingerprint",
+        "Does not keep the Coordinator purpose usable on the stale pipeline",
         "Does not fail merely because the Orca version string changed",
         "Does not hash full help prose"
       ]
@@ -252,14 +253,47 @@
     {
       "id": 20,
       "prompt": "Certify a Worker and Reviewer, but this harness exposes no reliable model-lineage metadata for the Reviewer.",
-      "expected_output": "Records the Reviewer family as unknown, certifies the otherwise valid profile, and preserves review independence through a separate read-only Reviewer Dispatch without a provider gate.",
+      "expected_output": "Records the Reviewer family as unknown, configures the recipe and explicitly requested diagnostic, and preserves review independence through a separate read-only Reviewer Dispatch without a provider gate.",
       "files": [],
       "expectations": [
-        "Does not fail certification only because model family is unknown",
+        "Does not fail configuration or the targeted diagnostic only because model family is unknown",
         "Stores family as unknown rather than guessing a lineage",
         "Does not require a same-family or unknown-family exception",
         "Keeps the Reviewer in a separate read-only Dispatch with fresh context",
         "Shows unknown at confirmation and records it in the final report"
+      ]
+    },
+    {
+      "id": 21,
+      "prompt": "Refresh this already configured Orca repository. Keep its valid Linear tracker, GitHub pull-request publication, no setup command, and accepted lack of automated tests. Replace the host profiles with six exact Pi/custom-argv profiles; some custom CLIs may show a first-run workspace-trust prompt. Use normal setup, not deep verification.",
+      "expected_output": "Uses the refresh fast path, asks one combined decision packet only for changed host-profile facts, writes a normalized schema 4 pool, and leaves trust/auth/model acceptance to each real launch.",
+      "files": [],
+      "expectations": [
+        "Adopts the valid tracker, domain, environment, publication, and no-tests decision without section-by-section ok prompts",
+        "Does not enumerate model catalogs or run auth, quota, or smoke probes",
+        "Creates no Probe Run, Task, terminal, model call, or disposable worktree",
+        "Stores common tiers and maxConcurrent once under host defaults",
+        "Deduplicates Orca command sequences into pipelines and argv/evidence into launchers",
+        "Keeps derived pending-runtime-launch and verification history out of profiles",
+        "Explains that a first-run trust prompt may fail that real launch and require local repair without blocking setup now",
+        "Shows one concise file/delta preview and asks once before writing"
+      ]
+    },
+    {
+      "id": 22,
+      "prompt": "Migrate this host pool: seven profiles all use tiers simple/standard/complex and maxConcurrent 2; all use the same precreated supervised Orca command sequence; five Pi profiles share one argv pattern and attestation; two custom harnesses use user-attested argv; only the Coordinator needs full handoff. The file also contains per-profile host/version, fullHandoff null/not-required blocks, smoke logs, amendments, and certification prose.",
+      "expected_output": "Writes a normalized schema 4 pool with host defaults, one supervised and one full-handoff pipeline, one launcher per distinct argv/evidence shape, compact profiles, and no operational history.",
+      "files": [],
+      "expectations": [
+        "Stores tiers and maxConcurrent once under defaults and only writes profile overrides when values differ",
+        "Stores the supervised Orca pipeline once even though evidence differs by launcher",
+        "Stores the Pi argv template and attestation once for all Pi profiles",
+        "Uses scalar Alignment and Coordinator bindings while preserving list-valued failover pools",
+        "Omits fullHandoff nulls and derives purpose from role plus launcher mapping",
+        "Promotes any still-current flag or routing constraint found in prose into structured config or the decision packet before deleting history",
+        "Removes verification, certification, smoke logs, amendment prose, repeated host keys, and repeated Orca versions",
+        "Does not use YAML anchors or merge keys",
+        "Leaves any active Wave Manifest unchanged"
       ]
     }
   ]

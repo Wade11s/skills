@@ -1,6 +1,6 @@
 # Tracker Certification
 
-Use this reference only while selecting and certifying the primary work
+Use this reference only while selecting and configuring the primary work
 tracker. The selected integration must be visible to Orca; its command
 transport may be Orca-native or a separately verified provider CLI.
 
@@ -89,46 +89,52 @@ readiness:
 
 ## Certification levels
 
-Read-only checks produce `reads: passed`. A write is certified only after a
-real response proves it. With explicit user consent, create one clearly named
-temporary work item and exercise only the applicable sequence:
+Read-only setup is the default. One bounded, correctly scoped ticket read plus
+the version-matched transport guide produces `reads: passed` when identity,
+scope, lifecycle/classification values, relations, and the required operation
+surface agree.
 
-1. create and read;
-2. update and comment;
-3. lifecycle and classification;
-4. parent/dependency, when supported;
-5. worktree/review linking, when a disposable target exists;
-6. final readback;
-7. close or cancel.
-
-When the agent certification phase will create a disposable worktree, defer the
-actual worktree-link exercise to that shared target. The read-only guide check
-is provisional evidence; keep the probe work item open, perform and read back
-the link later, then close it. Final Execution readiness waits for that
-readback when running certification probes. If the user declines that probe,
-apply the write eligibility gate below; never report linkage as exercised.
-
-Use provider idempotency keys or retry identifiers when available. After an
-ambiguous write, resolve that same operation instead of issuing a second create.
-If the integration cannot delete the probe, close it and report its reference.
-
-When consent is withheld, record:
+An unexercised write path records:
 
 ```yaml
 certification:
   reads: passed
   writes: declared-not-exercised
+  probeReference: none
 ```
 
-Never phrase that as full write certification.
+This is the normal result for a new Adapter. Do not ask the user to create a
+temporary item, and do not leave a probe item open for a later profile or
+worktree check. Preserve `writes: passed` without another write when an existing
+Adapter's revision, scope, transport, and required command surface are
+unchanged.
+
+A write is `passed` only after a real response and readback prove it. Enter that
+branch during setup only when the user explicitly requests deep verification.
+Before doing so, show the exact external writes and obtain separate consent.
+Use one clearly named temporary item and only the applicable sequence:
+
+1. create and read;
+2. update and comment;
+3. lifecycle and classification;
+4. parent/dependency, when supported;
+5. worktree/review linking only when an explicit disposable target exists;
+6. final readback;
+7. close or cancel.
+
+Use provider idempotency keys or retry identifiers when available. After an
+ambiguous write, resolve that same operation instead of issuing a second create.
+If the integration cannot delete the item, close it and report its reference.
+Never phrase `declared-not-exercised` as full write certification.
 
 Before deriving phase readiness, apply the authoritative
 [write eligibility gate](../../orca-development-loop/references/tracker-adapter.md#write-eligibility-gate).
 When writes are `declared-not-exercised` and the other gates pass, set
 `requiresWriteConfirmation: true` and keep the affected phases usable. Do not
-collect or persist a standing `writeRiskAcceptance` waiver. Probe refusal never
-marks writes `passed`. A failed or missing required write still blocks the
-affected phase; setup may save those blocked results.
+collect or persist a standing `writeRiskAcceptance` waiver. A failed or missing
+required write still blocks the affected phase; setup may save those blocked
+results. The first confirmed real phase applies the configured write and
+readback rule; it does not silently promote the whole Adapter to `passed`.
 
 ## Existing configuration
 
