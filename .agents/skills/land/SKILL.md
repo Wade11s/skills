@@ -32,14 +32,15 @@ permanent policy: recheck destination settings before every landing.
    make the tree clean.
 5. Stage intended paths explicitly. Do not use `git add -A` or `git add .`.
 
-Use `rg --files` for repository inventory as documented in
-[AGENTS.md](../../../AGENTS.md#build-test-and-development-commands).
+Inventory the target skill's files and read its complete `SKILL.md` as required
+by [AGENTS.md](../../../AGENTS.md#1-establish-the-current-contract).
 
 ## 2. Verify the exact candidate
 
-This repository has no build step or configured automated test suite. Apply the
-manual acceptance contract from
-[AGENTS.md](../../../AGENTS.md#testing-guidelines) to the staged candidate:
+This repository has no repository-wide build. Apply the proportional validation
+contract from
+[AGENTS.md](../../../AGENTS.md#5-validate-proportionally) to the staged
+candidate:
 
 - run `git diff --check` before staging and `git diff --cached --check` after
   staging;
@@ -53,8 +54,8 @@ manual acceptance contract from
   sync.
 
 The repository-specific requirements above come from
-[AGENTS.md](../../../AGENTS.md#project-structure--module-organization) and
-[AGENTS.md](../../../AGENTS.md#coding-style--naming-conventions). Do not run
+[AGENTS.md](../../../AGENTS.md#repository-map) and
+[AGENTS.md](../../../AGENTS.md#3-edit-the-skill). Do not run
 `bunx skills add Wade11s/skills` as validation; `README.md` documents it as the
 consumer installation command, not a test.
 
@@ -73,7 +74,7 @@ reuse them rather than duplicating the commit. Otherwise:
    to this landing request.
 
 The subject convention is authoritative in
-[AGENTS.md](../../../AGENTS.md#commit--pull-request-guidelines). Do not amend or
+[AGENTS.md](../../../AGENTS.md#definition-of-done). Do not amend or
 rewrite a commit already present on `origin/main`.
 
 ## 4. Recheck destination policy
