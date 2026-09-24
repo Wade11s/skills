@@ -1,0 +1,6 @@
+[
+  {"query": "Review the changes on my branch since main for code quality and spec fidelity", "should_trigger": true},
+  {"query": "Orca Reviewer Task: review the worker commit against base SHA abc123 and ticket GH-42; report Standards and Spec separately", "should_trigger": true},
+  {"query": "Implement GH-42 through the Orca worker-reviewer delivery loop", "should_trigger": false},
+  {"query": "Resolve the in-progress rebase conflict in my assigned worktree", "should_trigger": false}
+]

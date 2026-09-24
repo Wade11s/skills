@@ -14,8 +14,18 @@ Stop and report a mismatch before review.
 - Reviewed head: `<sha>`
 - Diff command: `<exact command>`
 - Worker report: `<artifact or bounded summary>`
+- Design reference: `<none or codebase-design entry point and relevant design concern; read-only>`
 
-Do not edit files, commit, implement fixes, or change tracker state. You are the independently dispatched role that owns code review and the verdict; the Coordinator has not reviewed the patch. Load and execute the repository `code-review` protocol unless the Wave Manifest names another protocol.
+## Required skills
+
+- `code-review`: `<installed entry point reachable from this checkout>`
+  <or replace with the explicitly confirmed alternative review protocol>
+- Apply the [unattended role skill contract](../references/communication-contract.md#unattended-role-skills).
+
+Do not edit files, commit, implement fixes, or change tracker state. You are
+the independently dispatched role that owns code review and the verdict; the
+Coordinator has not reviewed the patch. Load and execute the Required review
+protocol before reporting a verdict.
 
 ## Review
 

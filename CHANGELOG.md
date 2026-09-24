@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-24
+
+- [Add]: engineering skills + adapt Matt Pocock's `diagnosing-bugs`, `tdd`, `code-review`, and `resolving-merge-conflicts` as model-invocable skills under `skills/engineering/` with MIT attribution.
+- [Add]: Alignment and design skills + vendor `grill-with-docs`, `domain-modeling`, `to-spec`, `to-tickets`, `codebase-design`, `research`, and the existing grilling route/dependencies while retaining upstream invocation modes.
+- [Update]: Orca setup + install role skills for the configured harnesses with a project-local noninteractive `bunx skills add` after setup confirmation, then require their availability in fresh Issue Worktrees.
+- [Fix]: unattended Orca role skills + name relevant installed skills and prerequisite context in Worker, Reviewer, fix, and integration Tasks without requiring separate per-Dispatch proof of invocation.
+- [Fix]: code-review work-in-progress coverage + include staged, unstaged, and untracked files alongside commits when reviewing a dirty checkout.
+
 ## 2026-09-19
 
 - [Update]: probe-free Orca setup + replace section-by-section approval and mandatory synthetic profile probes with one decision packet, one write confirmation, static recipe fingerprints, and bounded first-real-launch verification.

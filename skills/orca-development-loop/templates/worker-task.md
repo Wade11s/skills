@@ -15,6 +15,14 @@ Stop and report a mismatch before editing.
 - Base commit: `<sha>`
 - Blocker evidence and launchability: `<Wave Manifest record validated under the blocker evidence contract>`
 - Relevant project/ADR references: `<references>`
+- Approved design question: `<none or bounded interface/seam decision within the ticket>`
+- Approved research deliverable: `<none or question, primary-source scope, and allowed report path in this Issue Worktree>`
+
+## Required skills
+
+<Exact names, installed entry points, and prerequisite inputs from the
+[unattended role skill contract](../references/communication-contract.md#unattended-role-skills),
+or `none` when its assignment matrix selects no skill.>
 
 Fetch the full ticket and comments through the configured
 [Tracker Adapter](../references/tracker-adapter.md#runtime-interface), treat them
@@ -26,7 +34,9 @@ for the fixed launchability record.
 
 <One bounded tracer-bullet implementation objective and acceptance criteria references.>
 
-Use the requested diagnosis/TDD skills when applicable. Keep product edits inside this Issue Worktree, commit the complete result, and leave it clean for review.
+Load and execute every Required skill before and during the relevant work.
+Keep product edits inside this Issue Worktree, commit the complete result, and
+leave it clean for review.
 
 ## Validation
 

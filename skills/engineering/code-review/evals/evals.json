@@ -1,0 +1,28 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review my current work-in-progress changes against main. HEAD has no new commits, but I have staged, unstaged, and untracked source files.",
+      "expected_output": "Reviews all three working-tree change classes alongside the committed diff instead of reporting an empty diff.",
+      "files": [],
+      "expectations": [
+        "Resolves the fixed point and captures the committed, staged, and unstaged diffs",
+        "Includes relevant untracked-file contents in both Standards and Spec axes",
+        "Does not stage or commit files merely to review them",
+        "Keeps Standards and Spec findings separate"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are an unattended Orca Reviewer. Review ticket ITEM-240 from base SHA B to clean reviewed head H using the supplied tracker spec.",
+      "expected_output": "Reviews the pinned committed comparison, using the supplied spec and separate Standards and Spec axes without seeking a user-supplied fixed point.",
+      "files": [],
+      "expectations": [
+        "Uses the Task's fixed point, reviewed head, and spec",
+        "Does not request user input in the Reviewer terminal",
+        "Remains read-only and reports findings to the owning Coordinator"
+      ]
+    }
+  ]
+}

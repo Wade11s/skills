@@ -1,0 +1,6 @@
+[
+  {"query": "Debug why this endpoint intermittently throws 500; build a reproducible loop before changing code", "should_trigger": true},
+  {"query": "Orca Worker Task: diagnose a slow import in the assigned worktree; ask the Coordinator for a captured trace if local reproduction fails", "should_trigger": true},
+  {"query": "Use the already confirmed test seam to add a new export feature test-first", "should_trigger": false},
+  {"query": "Review the current branch against main for standards and ticket fidelity", "should_trigger": false}
+]

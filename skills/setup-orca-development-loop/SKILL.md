@@ -12,9 +12,9 @@ description: >-
 # Setup Orca Development Loop
 
 Create the durable project configuration consumed by `orca-development-loop`.
-Install both skills together; the runtime skill's Tracker Adapter reference owns
-the shared blocker and write-eligibility contracts. Stop if that reference
-cannot be resolved.
+Install both Orca loop skills together; the runtime skill's Tracker Adapter
+reference owns the shared blocker and write-eligibility contracts. Stop if
+that reference cannot be resolved.
 
 The normal rule is **configure now, verify on first real use**. Setup validates
 repository policy, tracker reads, exact launch recipes, and their command
@@ -62,6 +62,9 @@ Setup is complete when:
   bounded verification during the real launch;
 - host-specific profiles live only in gitignored
   `docs/agents/agent-hosts.local.yaml`;
+- the role skills in the installation set below are installed in this project,
+  preserving user-only invocation for Alignment and model invocation for
+  autonomous Worker/Reviewer skills;
 - `docs/agents/orca-development-loop.md` points at complete documents with no
   placeholders; and
 - product files are unchanged.
@@ -94,10 +97,12 @@ For `refresh-fast`, validate only:
 2. current project and host identity;
 3. one bounded tracker read plus Adapter revision/scope;
 4. only pipelines and launchers referenced by role-bound profiles; and
-5. Git status and configured validation/publication commands.
+5. Git status, configured validation/publication commands, and the
+   project-installed role skills.
 
-If these match, report a no-op. Do not rediscover integrations, model catalogs,
-labels, profiles, or command help.
+If these match, report a no-op. If only role skills are missing, use
+the installation step below without rewriting valid configuration. Do not
+rediscover integrations, model catalogs, labels, profiles, or command help.
 
 For `host-only`, preserve tracker, triage, domain, environment, publication, and
 shared routing policy. Configure only one normalized schema 4 host pool and the
@@ -312,7 +317,8 @@ Render:
 - `docs/agents/environment.md`;
 - `docs/agents/agent-profiles.md`;
 - `docs/agents/agent-hosts.local.yaml`;
-- the root `## Agent skills` update; and
+- the root `## Agent skills` update;
+- the project-local role skill installation described below; and
 - this exact `.gitignore` entry:
 
 ```gitignore
@@ -327,7 +333,8 @@ Show one concise preview containing:
   entries;
 - the file create/update list and compact diffs for existing user-authored
   files;
-- the `.gitignore` and Orca metadata changes; and
+- the `.gitignore` and Orca metadata changes;
+- the role skills that need installation; and
 - any explicit deep-verification side effects.
 
 Offer full generated files on request; do not force the user through every
@@ -337,6 +344,48 @@ Then write the complete set in one pass.
 
 Update an existing `## Agent skills` block in place and preserve surrounding
 content. Leave no `<placeholder>` values.
+
+### Install role skills
+
+From the target project's repository root, after the final setup confirmation,
+install the packaged skills for Alignment, Worker, and Reviewer when missing.
+The `grilling` dependency and the existing `/grill-me` Alignment fallback are
+included with `grill-with-docs`. Installation preserves each skill's upstream
+invocation mode; it does not make user-only Alignment slash skills
+agent-invocable. Resolve each distinct role-bound harness to its documented
+Skills CLI agent ID before rendering the command. Replace the `--agent`
+argument with those exact IDs; do not rely on `--yes` auto-detection or use
+`*`, which would install into unrelated local agents.
+
+```bash
+bunx --yes skills@latest add Wade11s/skills \
+  --skill grill-with-docs \
+  --skill grill-me \
+  --skill grilling \
+  --skill domain-modeling \
+  --skill to-spec \
+  --skill to-tickets \
+  --skill codebase-design \
+  --skill research \
+  --skill diagnosing-bugs \
+  --skill tdd \
+  --skill code-review \
+  --skill resolving-merge-conflicts \
+  --agent <confirmed-role-agent-ids> \
+  --copy --yes
+```
+
+This is a project-local copy install: omit `--global`, and include the
+installed files in the committed setup state so fresh Issue Worktrees see
+them. Check that Alignment has its interactive skills and that Worker and
+Reviewer harnesses can find their assigned skills. If a configured harness
+has no documented Skills CLI ID, stop and report the missing installation
+route rather than guessing one.
+If installation fails or a harness cannot load a skill, report the exact
+failure and leave that role's affected workflow unusable, even if the
+tracker-derived `readiness` field says `ready`; do not add a synthetic
+readiness field. On an unchanged refresh with the complete set already
+installed, skip the command.
 
 ## Migration
 

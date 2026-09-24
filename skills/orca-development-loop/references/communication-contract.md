@@ -15,6 +15,37 @@ So the Coordinator writes only the spec body. It never hand-writes a lifecycle e
 
 The same split explains why the delivery Coordinator arrives through a full handoff. Nested worker depth is counted from the terminal that issues the command and defaults to one generation, and creating a new Run does not reset it, so a Coordinator that was itself a supervised Dispatch could not dispatch Workers at all.
 
+## Unattended role skills
+
+Worker and Reviewer Dispatches run without a user in their terminals. The
+Coordinator names the `Required skills` in each Task and supplies any
+prerequisite decisions or inputs. Select by work, not by model profile:
+
+| Dispatch | Required skill |
+|---|---|
+| Bug implementation or repair, including a new bug found during feature review | `diagnosing-bugs` |
+| Implementation explicitly requiring test-first work | `tdd` (in addition to diagnosis for a bug) |
+| Worker designing an approved module interface or test seam | `codebase-design` |
+| Worker with an approved source-backed research deliverable | `research`, only when the harness can dispatch a child and the Task permits a research file in the Issue Worktree |
+| Implementation or Integration Reviewer | `code-review`, or the explicitly confirmed alternative review protocol |
+| Integration Worker resolving content conflicts | `resolving-merge-conflicts` |
+| Integration Worker repairing failed combined-state validation | `diagnosing-bugs`; add `tdd` when test-first work is required |
+
+Name the project-installed, model-invocable engineering skill and link its
+`SKILL.md` from the receiving checkout. Supply already-confirmed test seams
+when assigning `tdd`, and the fixed point and ticket/spec for `code-review`.
+When useful to judge an existing design, a Reviewer may consult
+`codebase-design` as read-only reference material; it does not redesign or
+write files. `research` writes a source-cited report, so it belongs only to
+an authorized Worker, not a read-only Reviewer. The Coordinator dispatches
+these role skills but does not load them for its own code judgments.
+The role loads and executes each named skill autonomously before doing the
+relevant work; it never waits for a user to type a slash command in its
+terminal. If a skill or prerequisite is unavailable, report the blocker through
+the normal Dispatch lifecycle instead of silently skipping it. Retained roles
+continue the assigned skill on fix/re-review; replacement roles reload it from
+the full Task. Alignment's interactive slash route is separate.
+
 ## Command surface
 
 Orca accepts a fixed `--type` enum: `status`, `dispatch`, `worker_done`, `merge_ready`, `escalation`, `handoff`, `question`, `decision_gate`, `heartbeat`. The lifecycle names this skill uses are **subjects carried by those types**, so every send maps through this table and every receiver routes on `subject`.

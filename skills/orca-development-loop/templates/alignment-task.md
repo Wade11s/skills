@@ -53,7 +53,9 @@ for the user to run it:
 - `/to-spec` when a durable spec is warranted;
 - `/to-tickets` after approval, or directly for one bounded issue-ready bug.
 
-Do not invoke user-only slash skills on the user's behalf.
+`/grill-with-docs` can use the installed `grilling` and `domain-modeling`
+dependencies. Keep the user-only slash skills user-invoked; recommend the
+command and wait for the user to run it here.
 
 ## Project context
 

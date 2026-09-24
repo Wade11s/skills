@@ -1,0 +1,6 @@
+[
+  {"query": "Resolve the merge conflict currently in progress in my feature worktree", "should_trigger": true},
+  {"query": "Orca Integration Task: preflight found conflicts against main; resolve them in the assigned integration worktree and continue safely", "should_trigger": true},
+  {"query": "Integrate this accepted ticket into main; preflight found no conflicts", "should_trigger": false},
+  {"query": "Review the proposed merge diff against our standards and ticket", "should_trigger": false}
+]

@@ -74,12 +74,18 @@ For new work or a current-schema wave:
    `failed` or a missing required operation still blocks; `declared-not-exercised`
    stays usable when `requiresWriteConfirmation` is true and the existing phase
    confirmation will cover it.
-6. In setup schema 5, accept
+6. Check that the selected phase's [role skills](../setup-orca-development-loop/SKILL.md#install-role-skills)
+   are installed for its configured harnesses in the current checkout. For
+   Execution, require the project-local copies to be in the Git base used for
+   fresh Issue Worktrees. Missing packages block the phase even if the
+   tracker-derived `readiness` field says `ready`; route the repair through
+   setup. Check availability, not whether a role later invoked a skill.
+7. In setup schema 5, accept
    `setupEvidence.worktreeSetup: runtime-deferred` only when
    `docs/agents/environment.md` contains an exact sourced setup policy and
    command. The first Issue Worktree must run it before agent work; a failure
    blocks the wave.
-7. Require a Git workspace for Execution because this loop's acceptance,
+8. Require a Git workspace for Execution because this loop's acceptance,
    review, and integration evidence is commit-based. A folder-only setup may
    still support Alignment.
 
@@ -225,7 +231,10 @@ Run the **Execution Gate** before generating a handoff:
    using `docs/agents/agent-hosts.local.yaml`. Apply the write eligibility and
    blocker evidence contracts at this same confirmation: unexercised writes and
    unreadable empty blocker sets share this Execution confirmation; named,
-   hinted, or ambiguous blockers stay ticket-specific.
+   hinted, or ambiguous blockers stay ticket-specific. Include any decisions
+   needed to run [unattended role skills](references/communication-contract.md#unattended-role-skills),
+   such as `tdd` test seams, in this confirmation rather than leaving them for
+   Worker or Reviewer terminals.
 9. Show the publication mode and exact authorized remote/branch flow.
 10. Wait for explicit user confirmation. Apply any confirmed forward-safe
     tracker corrections through the Adapter and read them back. If readback
@@ -276,8 +285,8 @@ whose name is the path-safe `waveId`.
 - Reference tracker tickets, specs, ADRs, and project docs instead of copying
   them.
 - Redact secrets and personal data.
-- Include suggested role skills, the Main Run return address, the configured
-  Adapter revision, and configured profiles.
+- Include role-skill assignment instructions, the Main Run return
+  address, the configured Adapter revision, and configured profiles.
 - Resolve template-relative links to installed-skill references reachable from
   the receiving agent's checkout before saving temporary Tasks or handoffs.
 

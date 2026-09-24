@@ -28,7 +28,9 @@ Before implementation:
 - run the exact setup policy from `docs/agents/environment.md`;
 - confirm the worktree has one mutation owner and no unrelated terminal;
 - link the worktree through the Adapter when that operation is configured;
-- render a Worker Task with this ticket's pinned Worker entry, the manifest's validation commands, and the communication contract.
+- render a Worker Task with this ticket's pinned Worker entry, the manifest's
+  validation commands, and the
+  [Required skills](communication-contract.md#unattended-role-skills).
 
 When `workspace.setupEvidence` is `runtime-deferred`, this first real Issue
 Worktree is the setup test. Capture the command result before creating a Worker
@@ -55,8 +57,11 @@ Before review dispatch, the Coordinator's boundary is metadata-only: lifecycle I
 2. Create the read-only Review Task immediately after metadata checks.
 3. Launch a fresh Reviewer terminal in the same Issue Worktree using this ticket's pinned Reviewer entry. Never reuse the Worker's terminal or context as the Reviewer.
 4. Give that Reviewer the Task rendered from the Reviewer template.
-5. Require the **Reviewer Agent** to load and execute the repository `code-review` protocol or another explicitly confirmed review protocol.
-6. The Reviewer reports a process outcome and a separate verdict. There is no Coordinator-generated verdict and no direct implementation-to-integration transition.
+5. Require the **Reviewer Agent** to load and execute the Task's review protocol
+   under [Unattended role skills](communication-contract.md#unattended-role-skills).
+6. Require a process outcome and separate verdict. There is no
+   Coordinator-generated verdict and no direct implementation-to-integration
+   transition.
 
 ```text
 outcome=succeeded + verdict=ACCEPT
@@ -106,7 +111,12 @@ A retained terminal that must resume work mid-integration waits for that handbac
 4. Run the required combined-state checks in that Issue Worktree.
 5. Apply the authoritative main-advance and publication procedure below.
 
-If combined-state validation fails, main remains unchanged. The Issue Worktree already contains the cleanly merged candidate, so dispatch an Integration Worker there to diagnose/fix it, then require a fresh Integration Reviewer before main advances. The accepted SHA, rather than the worktree's current checkout, remains the original reviewed evidence.
+If combined-state validation fails, main remains unchanged. The Issue Worktree
+already contains the cleanly merged candidate, so dispatch an Integration
+Worker there to diagnose/fix it, then require a fresh Integration Reviewer
+`ACCEPT` on the repaired head before main advances. Name their Required skills
+in their Tasks. The accepted SHA, rather than the worktree's current checkout,
+remains the original reviewed evidence.
 
 When `git merge-tree --write-tree` is unavailable (Git older than 2.38), get the same non-mutating answer from a throwaway index, for example `GIT_INDEX_FILE=$(mktemp) git read-tree -m --aggressive <merge-base> <current-main> <accepted-head>`, and record which form produced the preflight evidence.
 
@@ -224,9 +234,11 @@ completion, and leave the ticket `blocked`.
 Only when preflight reports content conflicts:
 
 1. preserve main and the Issue Worktree's accepted state, then create a dedicated Integration Worktree/branch from recorded current main;
-2. launch an Integration Worker there with the accepted branch, original review report, conflict list, and `resolving-merge-conflicts` skill;
+2. launch an Integration Worker there with the accepted branch, original review
+   report, conflict list, and Required skills in its Task;
 3. run tests and commit the integration result;
-4. launch a fresh Integration Reviewer in that Integration Worktree;
+4. launch a fresh Integration Reviewer in that Integration Worktree with its
+   Required review skill; require `ACCEPT` on the integration result;
 5. repeat fix/re-review there if required;
 6. publish the accepted and validated integration result through the
    authoritative main-advance and publication procedure above.

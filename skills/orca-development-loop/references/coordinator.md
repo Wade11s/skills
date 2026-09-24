@@ -49,7 +49,9 @@ Coordinator Run ID, accepted manifest version, and Adapter revision. Follow the
 3. Validate blocker records, scheduling, and dispatch eligibility under the
    [blocker evidence contract](tracker-adapter.md#blocker-evidence-contract).
 4. Report material tracker or manifest drift to Main.
-5. Create all independent Tasks before launching the first ready wave.
+5. Apply [Unattended role skills](communication-contract.md#unattended-role-skills)
+   to each Task. Create all independent Tasks before launching the first ready
+   wave.
 6. Use one top-level Issue Worktree per executable ticket, up to
    `maxParallelTickets`.
 7. Apply the environment's configured setup policy to fresh worktrees.
@@ -165,7 +167,7 @@ After metadata checks:
 - retain the Worker;
 - dispatch a fresh read-only Reviewer in the same Issue Worktree with the
   ticket's pinned Reviewer profile;
-- require the configured review protocol;
+- assign the configured review protocol to the Reviewer Task;
 - treat `REQUEST_CHANGES` as a successful review process with a non-accept
   verdict;
 - re-dispatch retained Worker and Reviewer terminals with delta Tasks;

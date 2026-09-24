@@ -12,7 +12,7 @@
         "Does not infer the tracker from the Git remote",
         "Performs no tracker write, agent launch, Run, Task, terminal, or disposable worktree on the default path",
         "Collects every unresolved choice in one decision packet instead of asking section by section",
-        "Plans all seven docs/agents outputs, the .gitignore addition, and one root Agent skills update"
+        "Plans all seven docs/agents outputs, the .gitignore addition, one root Agent skills update, and installation of the Alignment and execution role skills after confirmation"
       ]
     },
     {
@@ -145,6 +145,7 @@
         "Reads existing setup before asking",
         "Does not duplicate the Agent skills block",
         "Does not rerun tracker writes or profile diagnostics when existing evidence remains valid",
+        "Skips the role skill install command when the complete set is already installed",
         "Reports the existing Alignment and Execution readiness"
       ]
     },
@@ -294,6 +295,31 @@
         "Removes verification, certification, smoke logs, amendment prose, repeated host keys, and repeated Orca versions",
         "Does not use YAML anchors or merge keys",
         "Leaves any active Wave Manifest unchanged"
+      ]
+    },
+    {
+      "id": 23,
+      "prompt": "Refresh an otherwise valid Orca project where the Worker and Reviewer harnesses cannot find code-review or tdd. Install our packaged engineering skills locally without redoing tracker or profile discovery.",
+      "expected_output": "Previews and, after confirmation, runs a project-local noninteractive bunx skills add of the role skills plus grilling and the existing grill-me fallback from Wade11s/skills, checks they are available to the configured harnesses and fresh Issue Worktrees, and preserves valid setup documents.",
+      "files": [],
+      "expectations": [
+        "Uses bunx --yes skills@latest add Wade11s/skills with repeated --skill selectors for the role skills and dependencies, explicit documented --agent IDs for the configured role harnesses, plus --copy --yes from the target repository root",
+        "Omits --global, does not install into unrelated auto-detected agents, and keeps installed files in committed setup state for fresh Issue Worktrees",
+        "Skips tracker and profile rediscovery when only skill installation is missing",
+        "Reports a failed or partial installation for the affected role workflow rather than claiming it ready",
+        "Does not run a synthetic Worker or Reviewer to prove installation"
+      ]
+    },
+    {
+      "id": 24,
+      "prompt": "Install the Alignment package for our Orca project. I want grill-with-docs, grill-me, to-spec, and to-tickets to stay user-invoked while domain-modeling and grilling are available as dependencies.",
+      "expected_output": "Installs the packaged Alignment skills and their dependencies without changing their invocation metadata; Alignment recommends slash commands to the user and follows the configured Tracker Adapter for publication.",
+      "files": [],
+      "expectations": [
+        "Preserves upstream user-only invocation of grill-with-docs, grill-me, to-spec, and to-tickets",
+        "Installs grilling and domain-modeling as dependencies rather than pretending Alignment can invoke a user-only slash skill",
+        "Leaves spec/ticket publication authority in docs/agents/issue-tracker.md and the Orca Adapter",
+        "Does not assign interactive Alignment skills to unattended Worker or Reviewer Tasks"
       ]
     }
   ]

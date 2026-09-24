@@ -37,6 +37,7 @@ Fetch full ticket bodies and comments through the Wave Manifest's Tracker Adapte
 - Use the manifest's `validation` commands as the fast tier, full suite, and repo-specific acceptance checks.
 - Retain idle Worker/Reviewer sessions through integration when context is useful; re-dispatch them with delta Tasks rather than repeated stable role/Orca/project-doc context.
 - After every implementation or fix completion, perform metadata-only checks and dispatch a separate Reviewer before any code judgment; use a fresh Reviewer with the full Task for the first review and the retained Reviewer with the delta Re-review Task for bounded incremental re-review.
+- Name the [unattended role skills](../references/communication-contract.md#unattended-role-skills) in every applicable Worker and Reviewer Task.
 - Leave `code-review` to the Reviewer Agent, the only role that issues a review verdict.
 - Require final Reviewer `ACCEPT` before integration.
 - Execute the full [Integration gate](../references/issue-worktree-loop.md#integration-gate).
@@ -62,4 +63,4 @@ Return one bounded `wave_done` report in the JSON shape from the Coordinator ref
 - `orca-development-loop` - Coordinator, Issue Worktree, and failure-recovery references
 - the exact tracker guide/transport named by `docs/agents/issue-tracker.md`
 
-Role-only skills are assigned to roles, not loaded in the Coordinator session: Reviewer Tasks assign `code-review`; conflict Tasks assign `resolving-merge-conflicts`; implementation/fix Tasks assign `diagnosing-bugs` or `tdd` when required.
+Role-only skills are assigned through Tasks, not loaded in the Coordinator session. The [unattended role skill contract](../references/communication-contract.md#unattended-role-skills) is authoritative for assignment.

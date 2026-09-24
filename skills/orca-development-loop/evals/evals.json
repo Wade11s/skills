@@ -131,6 +131,7 @@
         "Uses new Task and Dispatch IDs",
         "Carries complete active findings and changed acceptance facts",
         "Does not repeat stable role, tracker, profile, or project context",
+        "Continues the original Required skills in each delta Dispatch and names any newly needed diagnosis skill",
         "Keeps process outcome separate from review verdict"
       ]
     },
@@ -144,6 +145,7 @@
         "Does not read the diff or issue an ACCEPT",
         "Retains the Worker",
         "Uses the pinned Reviewer profile",
+        "Names the project-installed code-review skill and supplies its fixed point and ticket/spec in the Reviewer Task",
         "Leaves code-review and the verdict to the Reviewer"
       ]
     },
@@ -168,8 +170,9 @@
       "expectations": [
         "Runs non-mutating preflight first",
         "Preserves accepted implementation evidence",
-        "Uses resolving-merge-conflicts",
+        "Names resolving-merge-conflicts in the conflict Task",
         "Requires a fresh Integration Reviewer",
+        "Assigns code-review or the confirmed alternate protocol to the Integration Reviewer",
         "Advances main only after review and final validation"
       ]
     },
@@ -484,7 +487,93 @@
         "Derives pending-runtime-launch only in each materialized profile",
         "Freezes rendered argv, expanded recipeFingerprint, evidence, and resolved routing values",
         "Does not copy host defaults, launcher/pipeline catalogs, unreferenced profiles, or operational history into the Wave Manifest",
-        "Reports setup drift on a missing reference, purpose mismatch, or unresolved placeholder"
+        "Reports setup drift on a missing reference, purpose mismatch, or unresolved placeholder",
+        "Names relevant skills per Task rather than adding skill lists to model profiles"
+      ]
+    },
+    {
+      "id": 38,
+      "prompt": "The ITEM-170 bug Worker and Reviewer are unattended. The four engineering skills were installed in the project setup and are visible in their Issue Worktree. Dispatch both roles without asking me to type slash commands.",
+      "expected_output": "Names diagnosing-bugs in the Worker Task and code-review in the Reviewer Task, supplies task inputs, and leaves autonomous loading and execution to each role without a separate skill-audit gate.",
+      "files": [],
+      "expectations": [
+        "Does not wait for the user to invoke a skill in either role terminal",
+        "Names project-installed model-invocable engineering skills and their reachable entry points in the Tasks",
+        "Supplies required context including the review fixed point and tracker ticket/spec",
+        "Does not require per-Dispatch proof of skill loading",
+        "Keeps the Coordinator out of the code-review verdict"
+      ]
+    },
+    {
+      "id": 39,
+      "prompt": "Plan an unattended ITEM-171 Worker Task requiring tdd. The test seams have not been agreed yet. The four packaged engineering skills are already installed.",
+      "expected_output": "Requests the test-seam decision during the Main Execution confirmation and includes the agreed seams in the Worker Task before dispatch; never asks the user to visit a Worker terminal.",
+      "files": [],
+      "expectations": [
+        "Does not ask the unattended Worker to get approval for its own test seams",
+        "Supplies the confirmed seams with the tdd Task assignment",
+        "Does not ask the user to switch to an unattended role terminal",
+        "Uses the already-installed model-invocable tdd skill"
+      ]
+    },
+    {
+      "id": 40,
+      "prompt": "The ITEM-172 Reviewer Task named code-review, and its completed report includes a verdict and findings but no separate proof that it loaded the skill. The implementation head and tests are valid.",
+      "expected_output": "Uses the normal review verdict and commit gates without demanding an extra skill-loading audit report.",
+      "files": [],
+      "expectations": [
+        "Does not add a separate skill invocation receipt to the completion contract",
+        "Uses the normal ACCEPT-on-exact-head gate",
+        "Keeps the Coordinator's verification metadata-only rather than doing the review itself",
+        "Requires code-review to be named in the Reviewer Task, not proven afterward"
+      ]
+    },
+    {
+      "id": 41,
+      "prompt": "ITEM-173 includes an approved module-interface seam decision and a source-backed research deliverable in its Issue Worktree. The selected Worker can launch a child agent. Dispatch the ticket.",
+      "expected_output": "Names codebase-design and research with installed entry points in the Worker Task, includes the bounded seam question and research report path, and leaves implementation and investigation to the Worker.",
+      "files": [],
+      "expectations": [
+        "Assigns codebase-design only for the approved design scope",
+        "Assigns research only because the ticket authorizes a source-cited file and the Worker can dispatch a child",
+        "Supplies the research question, source scope, and report path in the Task",
+        "Does not ask the Coordinator to make the design or research findings"
+      ]
+    },
+    {
+      "id": 42,
+      "prompt": "Review ITEM-174's shared API design. The Reviewer is read-only and has the installed codebase-design skill. The Worker did not have a research deliverable.",
+      "expected_output": "Includes codebase-design as an optional read-only design reference in the Reviewer Task while retaining code-review as the verdict protocol; does not assign research or permit edits.",
+      "files": [],
+      "expectations": [
+        "The Reviewer uses codebase-design guidance only to assess the existing design",
+        "The Reviewer does not redesign, write files, or spawn research work",
+        "The Reviewer still loads code-review and reports Standards and Spec independently"
+      ]
+    },
+    {
+      "id": 43,
+      "prompt": "You are Alignment with our installed grill-with-docs, grilling, domain-modeling, to-spec, and to-tickets. The user brought a fuzzy feature. Start the conversation, then publish only after the user invokes the right slash skill.",
+      "expected_output": "Recommends a user-invoked Alignment slash skill without invoking it, lets grill-with-docs use its dependencies, and follows docs/agents/issue-tracker.md and the Adapter for any spec or ticket publication.",
+      "files": [],
+      "expectations": [
+        "Keeps grill-with-docs, to-spec, and to-tickets user-only",
+        "Does not ask the user to repeat the Initial Request",
+        "Uses installed grilling and domain-modeling as dependencies when needed",
+        "Does not invent a spec publishing provider or bypass Adapter write eligibility",
+        "Publishes and reads back tickets without starting Execution before an explicit user request"
+      ]
+    },
+    {
+      "id": 44,
+      "prompt": "Start a new Execution wave. docs/agents/orca-development-loop.md still says execution ready, but the current Git base lacks the project-local code-review installation required by the Reviewer.",
+      "expected_output": "Stops before Coordinator handoff because the selected phase's installed skills are not available in fresh Issue Worktrees, and sends the project through setup or a committed installation repair without auditing skill invocation.",
+      "files": [],
+      "expectations": [
+        "Checks role-skill availability independently of tracker-derived readiness",
+        "Requires project-local copies in the Git base for fresh Issue Worktrees",
+        "Creates no Task or Coordinator handoff while the Reviewer skill is missing",
+        "Does not add per-Dispatch proof of skill use"
       ]
     }
   ]

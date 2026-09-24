@@ -12,6 +12,12 @@ This is a **delta Task** for the retained Reviewer. The original role, confirmed
 - Changed acceptance criteria: `<none or exact changes>`
 - Invalidated references to reload: `<none or references>`
 
+Continue the original Task's Required review protocol under the
+[unattended role skill contract](../references/communication-contract.md#unattended-role-skills);
+this delta is for the retained Reviewer. If that session must be replaced, the
+Coordinator sends the full original Reviewer Task plus this delta; the
+replacement loads the review protocol from the full Task.
+
 Review the incremental diff against every active prior finding and confirm that the fix introduces no regression or unrelated change. Continue using the already loaded review protocol; reload only an explicitly invalidated reference.
 
 Report process outcome separately from `ACCEPT` or `REQUEST_CHANGES`. Send one

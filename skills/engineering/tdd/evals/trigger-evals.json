@@ -1,0 +1,6 @@
+[
+  {"query": "Build the checkout flow test-first, red then green, through its public interface", "should_trigger": true},
+  {"query": "Orca Worker Task: user confirmed the payment API seam; implement this ticket one red-green slice at a time", "should_trigger": true},
+  {"query": "Diagnose this intermittent timeout before deciding where a regression test belongs", "should_trigger": false},
+  {"query": "Review the branch against the spec and our coding standards", "should_trigger": false}
+]
