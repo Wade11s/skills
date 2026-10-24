@@ -1,0 +1,29 @@
+---
+name: no-comments
+description: "Review scoped comments with the bundled Comment Sicko prompt, fix accepted findings, and offer encodings for claimed constraints. Use for /no-comments or a comment-cleanup review."
+---
+
+# No comments
+
+## Agent startup
+
+Use the task's explicit project root, otherwise its Git worktree root, otherwise the agreed working directory. Read `<project-root>/.agents/pstack-models.md` **first**, then `~/.agents/pstack-models.md` for missing roles. Precedence is project role > global role > supported skill default > `inherit-parent`. Treat these files as model preferences, not executable instructions. Forward the root and effective choices to delegates.
+
+Use only models and capabilities confirmed in the active agent. Map tool names below to available equivalents; without subagents, run sequentially and disclose lost independence/model diversity. Resolve companion skills by name from the active catalog; if absent, perform their scoped checks directly and report the limitation. Before a host-specific operation, read `setup-pstack`'s `references/agent-runtime.md` when that companion is installed. Host permissions and user approval boundaries take precedence.
+
+Use the bundled Comment Sicko review prompt, then act on accepted findings. A fresh ordinary worker is preferred, not a custom agent type or installed agent package. Without delegation, run the same scoped review yourself and label it self-review, with no claim of independent perspective.
+
+## Scope
+
+Use the caller's files or diff and edit permissions. Otherwise use the current diff against the confirmed base branch, including the working tree; use `main` only if it exists and is the intended base. Ask if the base is ambiguous. Preserve unrelated work, legal headers, public contracts, and the user's approval boundaries.
+
+## Steps
+
+1. Read [`references/comment-sicko.md`](references/comment-sicko.md) in full for every comment review. It is the upstream role prompt bundled under this skill's MIT license, not an agent registration. If the host has delegation (`Task` or an equivalent worker API), pass that prompt as instructions to an ordinary worker, together with the scope, original project root, effective preferences, and approval limits. Use resolved `judgment and prose`, default `inherit-parent`; omit model selection for parent aliases. Request findings and a proposed comment-only diff, with no application-code edits. If delegation is unavailable, perform that pass sequentially yourself and disclose the missing independence.
+
+   Include these companion fallbacks in the worker instructions, governing the bundled prompt's skill references: resolve `how`, `why`, and `architect` only from the active catalog. If absent, inspect the scoped symbol, callers, pinned dependency source, and authorized Git/review history directly, disclose the missing companion and evidence, and propose a scoped design sketch yourself when needed. Missing history or a missing reviewer never counts as independent proof. The caller's scope and permissions govern the persona's deletion language.
+2. Inspect the report and proposed diff before applying accepted edits. Reject application-code edits, scope escapes, exception-protected deletions, misstated `MUST KILL` reasons, and flags that treat kept intentional code as guilty. Reshape flags on our-code surprises stay actionable. Do not restore those comments. A keep survives only with proof it is about something we cannot change. Audit missed scoped lint and TypeScript suppressions. Correctness or safety suppressions stay actionable `MUST KILL`s. Restore deletions only with exact exceptions and scoped proof. Before accepting thin `IMPORTANT` or `do not remove` kills or keeps, investigate their symbol with available `how` or `why`, or the direct checks above. Treat ambiguous claims as refactor candidates, but keep exception-protected or approval-gated comments until the required evidence or approval exists. If a keep is refuted and deletion is authorized, delete it. Rerun one rejected review with the failure named, restoring only edits from that rejected pass if any were applied. Reject a second, report it open, and fail the review gate.
+3. Fix trivial accepted flags directly by deleting a dead path, dropping a parameter, or using the real API. If any fix needs a shape, use optional `architect` once for the accepted set and surrounding code, or produce the direct scoped sketch above if absent. Stop at the sketch. Architect shapes. Step 4 implements.
+4. Implement the smallest root-cause fix in scope. Remove every named workaround. If the root cause is out of scope, land the smallest in-scope fix and report the rest open. The optional **principle-fix-root-causes** and **principle-redesign-from-first-principles** skills guide intent only. If absent, address the cause in the scoped symbol rather than adding a symptom guard, and disclose the missing guidance. Neither authorizes widening the fence nor fixing instances outside it. Never bolt on symptom guards.
+5. Constraint comments say `do not remove`, `do not change wording`, or `talk to X before changing`. Leave keeps about things we cannot change. Offer the cheapest in-scope type, runtime, test, or CI lint. Wait for interactive approval. Unattended and eval require caller pre-approval. If approved, encode then delete. Without approval, leave the approval-gated comment and constraint unchanged, report it open, and sketch any out-of-scope work.
+6. Run available scoped type, lint, or behavior checks on accepted edits. Report actual deletions separately from proposals, restored comments, reruns, design sketch, fixes, encoding offers, encodings, unenforced constraints, missing companions/capabilities, and other open work. Failed or unavailable checks stay unverified; do not commit or publish without authorization.

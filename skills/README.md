@@ -1,7 +1,7 @@
-# 技能源目录
+# Skill sources
 
-每个技能直接放在 `<name>/SKILL.md`，不增加分类层。分组由仓库根目录的 `.claude-plugin/marketplace.json` 声明。
+Keep each skill directly at `<name>/SKILL.md`, without category directories. The repository's `.claude-plugin/marketplace.json` declares the groups.
 
-目前没有实际技能。新增方法和 Pi 开发流程见 [仓库说明](../README.md#新增技能)。
+This directory contains 58 skills adapted from pstack, all registered in the single `pstack` group. See the [repository README](../README.md) for the catalog, configuration precedence, optional capabilities, provenance, and development workflow. That README is maintenance documentation, not an installed skill's runtime dependency.
 
-只有 `SKILL.md` 是必需文件。需要详细资料、执行代码或静态资源时，再添加 `references/`、`scripts/` 或 `assets/`。
+Only `SKILL.md` is required. Add `references/`, `scripts/`, or `assets/` when a skill needs supporting material, executable code, or static resources. Keep all skill documents, bundled resources, templates, and script messages in English.
