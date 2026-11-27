@@ -160,6 +160,8 @@ pstack/
 
 ## 3. 迁移设计
 
+> 运行时 harness 的单一副本在 `skills/pstack-pi/pstack-poteto-mode/references/harness.md`（随技能安装）；`docs/harness/pi.md` 只是指针。下文凡写 `docs/harness/pi.md` 处，均指该文件。
+
 ### 3.1 仓库最终形态
 
 ```

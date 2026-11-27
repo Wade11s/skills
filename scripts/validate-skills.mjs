@@ -298,10 +298,25 @@ function localLinkTargets(file, text) {
 }
 
 function checkForbidden(file, text) {
-  for (const [pattern, label] of FORBIDDEN_TOKENS) {
-    const match = pattern.exec(text);
-    if (match) {
-      fail(file, `forbidden token (${label}): ${match[0]}`, lineOf(text, match.index));
+  // The one place Cursor names may appear is the mapping block the harness owns.
+  let inMapping = false;
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (/<!--\s*pstack:mapping:start\s*-->/.test(line)) {
+      inMapping = true;
+      continue;
+    }
+    if (/<!--\s*pstack:mapping:end\s*-->/.test(line)) {
+      inMapping = false;
+      continue;
+    }
+    if (inMapping) continue;
+    for (const [pattern, label] of FORBIDDEN_TOKENS) {
+      const match = pattern.exec(line);
+      if (match) {
+        fail(file, `forbidden token (${label}): ${match[0]}`, i + 1);
+      }
     }
   }
 }
