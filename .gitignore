@@ -5,3 +5,6 @@ node_modules/
 # pstack run state (todo files, decision logs)
 .pstack/
 .scratch/
+
+# upstream sync cache
+.cache/
