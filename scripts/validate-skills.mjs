@@ -243,7 +243,7 @@ function localLinkTargets(file, text) {
       if (target.includes("://") || target.startsWith("//")) continue;
       const clean = target.split("#")[0];
       if (!clean) continue;
-      targets.push({ target, line: index + 1 });
+      targets.push({ target: clean, display: target, line: index + 1 });
     }
   }
   return targets;
@@ -289,7 +289,12 @@ function checkReferences(file, text, skillNames) {
 }
 
 function titleOf(basename) {
-  return basename.replace(/\.md$/, "").replace(/-/g, " ").toLowerCase();
+  return basename.replace(/\.md$/, "").replace(/-/g, " ");
+}
+
+function mentionsWord(text, word) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(text);
 }
 
 function checkOrphans(skillDir, skillFile, skillText, files, links) {
@@ -306,10 +311,9 @@ function checkOrphans(skillDir, skillFile, skillText, files, links) {
     if (inPlaybooks) {
       const title = titleOf(path.basename(markdown));
       const kebab = path.basename(markdown, ".md");
-      const lower = skillText.toLowerCase();
-      if (lower.includes(title) || lower.includes(kebab)) continue;
+      if (mentionsWord(skillText, title) || mentionsWord(skillText, kebab)) continue;
     } else if (atRoot) {
-      if (skillText.includes(path.basename(markdown))) continue;
+      if (mentionsWord(skillText, path.basename(markdown))) continue;
     }
 
     const where = inReferences ? "links" : "mentions";
@@ -382,14 +386,14 @@ async function main() {
       checkForbidden(file, text);
       checkReferences(file, text, skillNames);
 
-      for (const { target, line } of localLinkTargets(file, text)) {
+      for (const { target, display, line } of localLinkTargets(file, text)) {
         const resolved = path.resolve(path.dirname(file), target);
         if (!isInside(SKILLS_DIR, resolved)) {
-          fail(file, `link escapes the pack and breaks after install: ${target}`, line);
+          fail(file, `link escapes the pack and breaks after install: ${display}`, line);
           continue;
         }
         if (!existsSync(resolved)) {
-          fail(file, `link target does not exist: ${target}`, line);
+          fail(file, `link target does not exist: ${display}`, line);
           continue;
         }
         if (path.extname(resolved) === ".md") {
