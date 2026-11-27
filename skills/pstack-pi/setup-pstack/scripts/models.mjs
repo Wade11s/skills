@@ -95,7 +95,11 @@ function globToRegExp(pattern) {
 }
 
 function exactMatch(pattern, entry) {
-  return pattern === `${entry.provider}/${entry.model}` || pattern === entry.model;
+  const needle = pattern.toLowerCase();
+  return (
+    needle === `${entry.provider}/${entry.model}`.toLowerCase() ||
+    needle === entry.model.toLowerCase()
+  );
 }
 
 function globMatch(pattern, entry) {
@@ -114,7 +118,9 @@ function bestFuzzy(pattern, catalogue) {
   if (matches.length === 0) return [];
   const aliases = matches.filter((entry) => isAlias(entry.model));
   const pool = aliases.length > 0 ? aliases : matches;
-  return [[...pool].sort((a, b) => b.model.localeCompare(a.model))[0]];
+  const best = [...pool].sort((a, b) => b.model.localeCompare(a.model))[0];
+  // The same id on several providers is kept for each, as `--models` does.
+  return catalogue.filter((entry) => entry.model === best.model);
 }
 
 function scope(patterns, catalogue) {

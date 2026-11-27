@@ -86,6 +86,27 @@ test("a fuzzy pattern keeps only Pi's best match", () => {
   assert.equal(result.stdout.trim(), "magpie/zhipu/glm-5.4");
 });
 
+test("an exact id is case-insensitive", () => {
+  const ctx = setup({ user: ["MAGPIE/ZHIPU/GLM-5.4"] });
+  const result = run(ctx, ["scope"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "magpie/zhipu/glm-5.4");
+});
+
+test("the same id on two providers is kept for each", () => {
+  const ctx = setup({ user: ["glm"] });
+  appendFileSync(
+    path.join(ctx.root, "catalogue.txt"),
+    "antigravity    zhipu/glm-5.4            128K     16K      yes       no\n",
+  );
+  const result = run(ctx, ["scope"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.stdout.trim().split("\n"), [
+    "magpie/zhipu/glm-5.4",
+    "antigravity/zhipu/glm-5.4",
+  ]);
+});
+
 test("a colon suffix that is not a thinking level stays in the pattern", () => {
   const ctx = setup({ user: ["magpie/zhipu/glm-5.4:bogus"] });
   const result = run(ctx, ["scope"]);
