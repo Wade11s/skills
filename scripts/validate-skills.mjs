@@ -18,13 +18,14 @@
  * Usage: node scripts/validate-skills.mjs [--json]
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
+const MANIFEST = path.join(ROOT, "scripts", "skill-manifest.json");
 const NAME_PREFIX = "pstack-";
 const NAME_ALLOWLIST = new Set(["setup-pstack"]);
 const MAX_CONTAINER_DEPTH = 3;
@@ -157,6 +158,41 @@ async function listMarkdown(dir, options = {}) {
   return out;
 }
 
+function loadManifest() {
+  if (!existsSync(MANIFEST)) {
+    fail(MANIFEST, "skill manifest is missing");
+    return new Set();
+  }
+  let data;
+  try {
+    data = JSON.parse(readFileSync(MANIFEST, "utf8"));
+  } catch (error) {
+    fail(MANIFEST, `skill manifest is not valid JSON: ${error.message}`);
+    return new Set();
+  }
+  if (!Array.isArray(data.skills)) {
+    fail(MANIFEST, "skill manifest must contain a skills array");
+    return new Set();
+  }
+  const names = new Set();
+  for (const name of data.skills) {
+    if (typeof name !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) || name.length > 64) {
+      fail(MANIFEST, `invalid skill name in manifest: ${JSON.stringify(name)}`);
+      continue;
+    }
+    if (!name.startsWith(NAME_PREFIX) && !NAME_ALLOWLIST.has(name)) {
+      fail(MANIFEST, `manifest name must start with "${NAME_PREFIX}" or be allowlisted: ${name}`);
+      continue;
+    }
+    if (names.has(name)) {
+      fail(MANIFEST, `duplicate skill name in manifest: ${name}`);
+      continue;
+    }
+    names.add(name);
+  }
+  return names;
+}
+
 async function findSkills() {
   const skills = [];
   if (!existsSync(SKILLS_DIR)) {
@@ -221,6 +257,18 @@ async function findSkills() {
 
 function lineOf(text, index) {
   return text.slice(0, index).split("\n").length;
+}
+
+function pendingSkillLink(resolved, declared) {
+  // Only a direct skill path can be pending: skills/<pack>/<declared-name>/...
+  // Anything else that happens to contain a declared name is a broken link.
+  const relative = path.relative(SKILLS_DIR, resolved);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return false;
+  const segments = relative.split(path.sep);
+  if (segments.length < 2) return false;
+  const name = segments[1];
+  if (!declared.has(name)) return false;
+  return !existsSync(path.join(SKILLS_DIR, segments[0], name));
 }
 
 function isInside(parent, target) {
@@ -323,6 +371,8 @@ function checkOrphans(skillDir, skillFile, skillText, files, links) {
 
 async function main() {
   const json = process.argv.includes("--json");
+  const strict = process.argv.includes("--strict");
+  const declared = loadManifest();
   const skills = await findSkills();
   const records = [];
 
@@ -372,7 +422,21 @@ async function main() {
     records.push({ dir, skillFile, text, name: data.name });
   }
 
-  const skillNames = new Set(records.map((record) => record.name).filter(Boolean));
+  const discovered = new Set(records.map((record) => record.name).filter(Boolean));
+  const skillNames = new Set([...declared, ...discovered]);
+
+  for (const record of records) {
+    if (!declared.has(record.name)) {
+      fail(record.skillFile, `skill is not declared in scripts/skill-manifest.json: ${record.name}`);
+    }
+  }
+  if (strict) {
+    for (const name of declared) {
+      if (!discovered.has(name)) {
+        fail(MANIFEST, `declared skill has no directory yet: ${name}`);
+      }
+    }
+  }
 
   for (const record of records) {
     const files = await listMarkdown(record.dir);
@@ -393,6 +457,7 @@ async function main() {
           continue;
         }
         if (!existsSync(resolved)) {
+          if (pendingSkillLink(resolved, declared)) continue;
           fail(file, `link target does not exist: ${display}`, line);
           continue;
         }
@@ -408,13 +473,13 @@ async function main() {
   }
 
   if (json) {
-    process.stdout.write(`${JSON.stringify({ skills: [...skillNames].sort(), errors }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify({ skills: [...discovered].sort(), errors }, null, 2)}\n`);
   } else {
     for (const error of errors) {
       console.error(`${error.file}:${error.line ?? "?"}: ${error.message}`);
     }
     process.stdout.write(
-      `${skillNames.size} skill(s) checked, ${errors.length} error(s)\n`,
+      `${discovered.size}/${declared.size} skill(s) present, ${errors.length} error(s)\n`,
     );
   }
 
