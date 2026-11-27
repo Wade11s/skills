@@ -65,7 +65,7 @@ The delegation principles keep parallel work sane:
 
 And one meta principle:
 
-- [Encode Lessons in Structure](../../skills/pstack-pi/pstack-principle-encode-lessons-in-structure/SKILL.md) turns advice you've repeated twice into a lint, check, or script. [`/skill:pstack-correct`](../../skills/pstack-pi/pstack-correct/SKILL.md) applies it to a whole repo, as shown in [Make it yours](./09-make-it-yours.md#fix-the-environment-with-correct).
+- [Encode Lessons in Structure](../../skills/pstack-pi/pstack-principle-encode-lessons-in-structure/SKILL.md) turns advice you've repeated twice into a lint, check, or script. [`/skill:pstack-correct`](../../skills/pstack-pi/pstack-correct/SKILL.md) applies it to a whole repo, as shown in [Make it yours](./09-make-it-yours.md#fix-the-environment).
 
 Don't memorize the list. Skim it now, then come back when you catch the agent doing something a name here would have prevented. That's how the vocabulary sticks.
 

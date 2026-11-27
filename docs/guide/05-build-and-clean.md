@@ -32,7 +32,7 @@ Each of these routes to its playbook ([Bug fix](../../skills/pstack-pi/pstack-po
 
 For sustained improvement of one number, there's the [Hillclimb playbook](../../skills/pstack-pi/pstack-poteto-mode/playbooks/hillclimb.md). Give it the metric, a target, and a floor on attempts, and it loops one hypothesis at a time with a frozen measurement harness. It keeps wins and reverts everything else.
 
-Both perf playbooks run [`/skill:pstack-benchmark-checklist`](../../skills/pstack-pi/pstack-benchmark-checklist/SKILL.md) on their numbers. Perf issue vets its baseline and every number after it, and Hillclimb vets its harness before freezing it. [Verify and ship](./06-verify-and-ship.md#vet-a-measured-number-with-benchmark-checklist) shows when to type it yourself.
+Both perf playbooks run [`/skill:pstack-benchmark-checklist`](../../skills/pstack-pi/pstack-benchmark-checklist/SKILL.md) on their numbers. Perf issue vets its baseline and every number after it, and Hillclimb vets its harness before freezing it. [Verify and ship](./06-verify-and-ship.md#vet-a-measured-number) shows when to type it yourself.
 
 Sometimes you want the cause before any fix. For a live symptom, such as a leak, an idle CPU spin, or a visual glitch, the [Runtime forensics playbook](../../skills/pstack-pi/pstack-poteto-mode/playbooks/runtime-forensics.md) instruments the running process. For a profile you already captured, the [Trace forensics playbook](../../skills/pstack-pi/pstack-poteto-mode/playbooks/trace-forensics.md) reads the artifact and maps the hot frame to source. Both return a diagnosis, not a fix:
 

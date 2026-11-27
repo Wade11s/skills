@@ -38,9 +38,10 @@ Everything else is ported. Platform differences are documented in
 node scripts/upstream-diff.mjs
 ```
 
-The script clones the upstream repository into `.cache/` at the pinned commit, fetches the
-current default branch, and prints every upstream path that changed since the pin, mapped to
-its local counterpart. It does not modify anything.
+The script clones the upstream repository into `.cache/` once, fetches the default branch and
+the pinned commit, then prints every upstream path that changed since the pin, mapped to its
+local counterpart. It does not modify anything. Delete `.cache/upstream-plugins` after moving
+the pin, so the cache refetches from scratch.
 
 To take a change:
 

@@ -172,7 +172,7 @@ That's the whole prompt. [`/skill:pstack-bro`](../../skills/pstack-pi/pstack-bro
 - **Correcting the same mistake by hand.** A correction in chat helps one run. `/skill:pstack-correct` fixes the repo so no later run repeats it.
 - **Using `/skill:pstack-arena` for coverage.** `/skill:pstack-arena` repeats one design or code brief, then picks a base and grafts the best parts. `/skill:pstack-swarm` partitions slices or declared race arms and aggregates one report.
 - **Accepting every review comment.** Bots and humans both file real catches and noise in one list. `/skill:pstack-interrogate` keeps only the findings a rerun proves and lists what it dropped and why, and you can override either way.
-- **Treating `auto` as a model slug.** `auto` and `inherit-parent` mean "omit the model field so the subagent inherits the parent chat model." [Setup](./01-setup.md) covers the roles.
+- **Reaching for `auto` or `inherit-parent` as a model value.** Neither exists in pstack on Pi: every role names a model from your scoped set, and an unassigned role stops the step. [Setup](./01-setup.md) assigns them.
 - **Reporting success off a green build.** A build proves it compiles. Ask for the real command, flow, stored value, or profile, and expect the evidence in the reply.
 - **Writing a `SKILL.md` freehand.** Route it through the [Authoring or modifying a skill playbook](../../skills/pstack-pi/pstack-poteto-mode/playbooks/authoring-a-skill.md) so validation and review happen.
 

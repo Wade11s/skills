@@ -49,22 +49,40 @@ function defaultBranch() {
   return ref.replace(/^origin\//, "");
 }
 
-function localPath(upstreamPath) {
+const RENAMES = { "poteto-help": "pstack-help" };
+const AGENTS = {
+  "poteto-agent.md": "pstack-poteto-mode",
+  "comment-sicko.md": "pstack-no-comments",
+};
+const REMOVED = [
+  "pstack/skills/make-bot-ui/",
+  "pstack/skills/ketchup-video/",
+  "pstack/automations/",
+  "pstack/skills/poteto-mode/references/bugbot-triage.md",
+  "pstack/skills/poteto-mode/scripts/watch-pr/",
+];
+
+export function localPath(upstreamPath) {
+  if (REMOVED.some((prefix) => upstreamPath.startsWith(prefix))) {
+    return "(removed)";
+  }
   const relative = upstreamPath.slice(SCOPE.length);
   const skills = relative.match(/^skills\/([a-z0-9-]+)\/(.*)$/);
   if (skills) {
     const [, name, rest] = skills;
-    const local = name === "setup-pstack" ? name : `pstack-${name}`;
+    const local = RENAMES[name] ?? (name === "setup-pstack" ? name : `pstack-${name}`);
     return path.join("skills", "pstack-pi", local, rest);
   }
   const agents = relative.match(/^agents\/(.+)$/);
   if (agents) {
-    return path.join("skills", "pstack-pi", "pstack-no-comments", "references", agents[1]);
+    const skill = AGENTS[agents[1]];
+    if (!skill) return `(unmapped) ${relative}`;
+    return path.join("skills", "pstack-pi", skill, "references", agents[1]);
   }
   if (relative.startsWith("docs/guide/")) {
     return path.join("docs", relative.slice("docs/".length));
   }
-  return path.join("(removed or unmapped)", relative);
+  return `(unmapped) ${relative}`;
 }
 
 function main() {
@@ -94,9 +112,11 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (error) {
-  process.stderr.write(`upstream-diff: ${error.message}\n`);
-  process.exitCode = 1;
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    main();
+  } catch (error) {
+    process.stderr.write(`upstream-diff: ${error.message}\n`);
+    process.exitCode = 1;
+  }
 }

@@ -28,7 +28,7 @@ Ask for the proof as an artifact you can inspect yourself: the failing test and 
 
 For a small diff you don't fully trust, [`/skill:pstack-blast-radius`](../../skills/pstack-pi/pstack-blast-radius/SKILL.md) finds what it could break elsewhere. It finds the one fact that makes the change safe and proves that fact by running code, not by arguing for it.
 
-## Vet a measured number with `/skill:pstack-benchmark-checklist`
+## Vet a measured number
 
 A before-and-after number is the easiest evidence to get wrong by accident. A warm cache, a debug build on one side, or work that never ran inside the timed region can each produce a convincing speedup. Before you report or act on a number, type:
 
