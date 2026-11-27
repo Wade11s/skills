@@ -7,7 +7,7 @@
 #   # pstack todo: <title>
 #   <!-- pstack:todo v1 -->
 #   - [ ] 01 frame - done means: ...
-#   - [x] 02 repro - repro fails at HEAD (2026-01-01T00:00:00Z)
+#   - [x] 02 repro - repro fails at HEAD (done 2026-01-01T00:00:00Z)
 #
 # A phase is not complete until `done` exits 0. The file wins over the reply.
 
@@ -63,6 +63,21 @@ id_check() {
 }
 
 LOCKDIR=""
+LOCK_SPINS="${PSTACK_LOCK_SPINS:-200}"
+
+mtime_of() {
+  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || printf '0'
+}
+
+now_seconds() {
+  date +%s
+}
+
+steal_lock() {
+  mv "$1" "$1.stale.$$" 2>/dev/null || return 1
+  rm -rf "$1.stale.$$"
+}
+
 release() {
   [ -n "$LOCKDIR" ] || return 0
   rm -rf "$LOCKDIR" 2>/dev/null || true
@@ -70,7 +85,7 @@ release() {
 }
 
 acquire() {
-  local lock="$1.lock" i=0 owner
+  local lock="$1.lock" i=0 owner age
   trap 'release' EXIT
   trap 'release; exit 143' TERM
   trap 'release; exit 130' INT
@@ -78,21 +93,18 @@ acquire() {
     if [ -f "$lock/pid" ]; then
       owner=$(cat "$lock/pid" 2>/dev/null || true)
       if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
-        if mv "$lock" "$lock.stale.$$" 2>/dev/null; then
-          rm -rf "$lock.stale.$$"
-          continue
-        fi
+        steal_lock "$lock" && continue
+      fi
+    else
+      # A holder died between mkdir and writing its pid. Give it a moment first.
+      age=$(($(now_seconds) - $(mtime_of "$lock")))
+      if [ "$age" -ge 5 ]; then
+        steal_lock "$lock" && continue
       fi
     fi
     i=$((i + 1))
-    if [ "$i" -gt 200 ]; then
-      # A holder died before writing its pid. Take the lock only once.
-      if mv "$lock" "$lock.stale.$$" 2>/dev/null; then
-        rm -rf "$lock.stale.$$"
-        mkdir "$lock" 2>/dev/null || die "lock timeout: $lock"
-        break
-      fi
-      die "lock timeout: $lock"
+    if [ "$i" -gt "$LOCK_SPINS" ]; then
+      die "lock is held by a live process: $lock"
     fi
     sleep 0.05
   done
@@ -113,7 +125,7 @@ has_step() {
     /^- \[[ x]\] [0-9][0-9]* / {
       line = $0
       sub(/^- \[[ x]\] [0-9][0-9]* /, "", line)
-      sub(/ \([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9:]+Z\).*$/, "", line)
+      sub(/ \(done [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9:]+Z(: .*)?\)$/, "", line)
       if (line == target) found = 1
     }
     END { exit found ? 0 : 1 }
@@ -200,8 +212,8 @@ cmd_done() {
     index($0, "- [ ] " id " ") == 1 {
       line = $0
       sub(/^- \[ \] /, "- [x] ", line)
-      suffix = " (" ts ")"
-      if (note != "") suffix = suffix " " note
+      suffix = " (done " ts ")"
+      if (note != "") suffix = " (done " ts ": " note ")"
       print line suffix
       next
     }

@@ -12,6 +12,8 @@ its inline Principles index. Use the absolute path your parent gave you. With no
 read `../SKILL.md` from this file's directory. Your skill catalog may hide that skill, so a
 missing catalog entry does not mean pstack is absent.
 
+If the skill file is missing, stop and tell your parent; do not improvise its rules.
+
 Read `../worker.md` before anything else unless your brief already starts with it.
 
 Navigate to a leaf `principle-*` skill whenever you apply that principle. Read its

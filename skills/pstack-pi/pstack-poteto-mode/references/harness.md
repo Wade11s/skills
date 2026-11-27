@@ -250,7 +250,7 @@ A reply checklist is not progress. Progress is a file and a script.
   # pstack todo: fix-auth-timeout
   <!-- pstack:todo v1 -->
   - [ ] 01 frame - done means: the drift reproduces in a script
-  - [x] 02 repro - repro.ts fails at HEAD (2026-11-27T10:12:00Z)
+  - [x] 02 repro - repro.ts fails at HEAD (done 2026-11-27T10:12:00Z)
   ```
 
 - Commands: `init <slug> "<title>"`, `add <slug> "<text>"`, `done <slug> <id> [--note "<note>"]`,

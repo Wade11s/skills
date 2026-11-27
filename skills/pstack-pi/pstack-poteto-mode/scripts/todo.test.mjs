@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -163,4 +163,35 @@ test("step text is stored literally", () => {
   ok(cwd, ["add", "run", text]);
   assert.ok(readFileSync(file, "utf8").includes(text));
   assert.equal(existsSync(path.join(cwd, "pwn")), false);
+});
+
+test("a timestamp-like suffix in step text is not stripped", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  ok(cwd, ["add", "run", "ship (2026-01-01T00:00:00Z) build"]);
+  ok(cwd, ["done", "run", "01"]);
+  const result = run(cwd, ["add", "run", "ship"]);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("a lock held by a live process is not stolen", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  const lock = path.join(cwd, ".pstack/run/todo.md.lock");
+  mkdirSync(lock);
+  writeFileSync(path.join(lock, "pid"), `${process.pid}\n`);
+  const result = run(cwd, ["add", "run", "blocked"], { PSTACK_LOCK_SPINS: "5" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /lock is held by a live process/);
+});
+
+test("a lock without a pid is stolen after the grace period", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  const lock = path.join(cwd, ".pstack/run/todo.md.lock");
+  mkdirSync(lock);
+  const past = new Date(Date.now() - 10_000);
+  utimesSync(lock, past, past);
+  const result = run(cwd, ["add", "run", "after a crash"]);
+  assert.equal(result.status, 0, result.stderr);
 });
