@@ -16,7 +16,13 @@ adapted to Pi. Other packs may be added later; every rule below applies to all o
 ```
 skills/<pack>/<skill>/SKILL.md
 skills/<pack>/<skill>/{playbooks,references,scripts,assets}/...
+scripts/skill-manifest.json      # every skill the pack intends to ship
 ```
+
+The manifest is the release target. During an incremental port, references to a declared
+skill that has no directory yet are allowed, so a branch can land before its neighbours.
+A discovered skill that is not declared is an error, and `--strict` additionally requires
+every declared skill to exist.
 
 - A pack is a directory directly under `skills/`. Today that is `skills/pstack-pi/`.
 - A skill is a directory containing `SKILL.md`, at most three levels below `skills/`.
@@ -87,9 +93,10 @@ Platform notes belong in `docs/harness/pi.md`, not in skill bodies.
 ## Commands
 
 ```bash
-npm run validate                 # scripts/validate-skills.mjs
-npx skills add ./ --list         # what the skills CLI sees
-pi -e . -p '/skill:pstack-bro say hi'   # load the package for one run
+npm run validate                          # scripts/validate-skills.mjs
+npm run validate -- --strict              # release gate: every declared skill exists
+npx skills add ./ --list                  # what the skills CLI sees
+pi -e . -p '/skill:pstack-bro say hi'     # load the package for one run
 ```
 
 CI runs the validator on every push and pull request.
@@ -97,7 +104,8 @@ CI runs the validator on every push and pull request.
 ## Adding or porting a skill
 
 1. Read the upstream skill and the matching section of `docs/planning/pstack-for-pi.md`.
-2. Create `skills/pstack-pi/pstack-<name>/SKILL.md` with the prefixed `name`.
+2. Add the skill to `scripts/skill-manifest.json`, then create
+   `skills/pstack-pi/pstack-<name>/SKILL.md` with the same name as its directory.
 3. Rewrite platform references using the harness rules. Keep the judgement rules.
 4. Update every reference to it: `/skill:pstack-<name>` in prose, `../pstack-<name>/` in
    links, and the `**<name>** skill` mentions.
