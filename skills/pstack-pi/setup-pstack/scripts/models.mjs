@@ -94,15 +94,27 @@ function globToRegExp(pattern) {
   return new RegExp(`^${source}$`, "i");
 }
 
-function matches(pattern, entry) {
-  const full = `${entry.provider}/${entry.model}`;
-  if (/[*?]/.test(pattern)) {
-    const matcher = globToRegExp(pattern);
-    return matcher.test(full) || matcher.test(entry.model);
-  }
-  if (pattern === full || pattern === entry.model) return true;
-  // Pi's fuzzy match is a case-insensitive substring of the model id, not of provider/id.
-  return entry.model.toLowerCase().includes(pattern.toLowerCase());
+function exactMatch(pattern, entry) {
+  return pattern === `${entry.provider}/${entry.model}` || pattern === entry.model;
+}
+
+function globMatch(pattern, entry) {
+  const matcher = globToRegExp(pattern);
+  return matcher.test(`${entry.provider}/${entry.model}`) || matcher.test(entry.model);
+}
+
+function isAlias(id) {
+  return id.endsWith("-latest") || !/-\d{8}$/.test(id);
+}
+
+// Pi's bestFuzzyMatch: prefer aliases, then the highest id.
+function bestFuzzy(pattern, catalogue) {
+  const needle = pattern.toLowerCase();
+  const matches = catalogue.filter((entry) => entry.model.toLowerCase().includes(needle));
+  if (matches.length === 0) return [];
+  const aliases = matches.filter((entry) => isAlias(entry.model));
+  const pool = aliases.length > 0 ? aliases : matches;
+  return [[...pool].sort((a, b) => b.model.localeCompare(a.model))[0]];
 }
 
 function scope(patterns, catalogue) {
@@ -114,8 +126,16 @@ function scope(patterns, catalogue) {
     const suffix = index > 0 ? raw.slice(index + 1) : "";
     const thinking = THINKING_LEVELS.has(suffix) ? suffix : undefined;
     const pattern = thinking ? raw.slice(0, index) : raw;
-    for (const entry of catalogue) {
-      if (!matches(pattern, entry)) continue;
+
+    let matched;
+    if (/[*?]/.test(pattern)) {
+      matched = catalogue.filter((entry) => globMatch(pattern, entry));
+    } else {
+      const exact = catalogue.filter((entry) => exactMatch(pattern, entry));
+      matched = exact.length > 0 ? exact : bestFuzzy(pattern, catalogue);
+    }
+
+    for (const entry of matched) {
       const full = `${entry.provider}/${entry.model}`;
       const key = `${full}:${thinking ?? ""}`;
       if (seen.has(key)) continue;

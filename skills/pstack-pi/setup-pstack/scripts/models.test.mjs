@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -73,6 +73,17 @@ test("a bare provider name does not fuzzy-match every model", () => {
   const result = run(ctx, ["scope"]);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /match no available model/);
+});
+
+test("a fuzzy pattern keeps only Pi's best match", () => {
+  const ctx = setup({ user: ["glm"] });
+  appendFileSync(
+    path.join(ctx.root, "catalogue.txt"),
+    "magpie         zhipu/glm-5.3             128K     16K      yes       no\n",
+  );
+  const result = run(ctx, ["scope"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "magpie/zhipu/glm-5.4");
 });
 
 test("a colon suffix that is not a thinking level stays in the pattern", () => {
