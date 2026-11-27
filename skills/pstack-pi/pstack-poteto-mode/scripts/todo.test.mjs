@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, utimesSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -185,13 +185,11 @@ test("a lock held by a live process is not stolen", () => {
   assert.match(result.stderr, /lock is held by a live process/);
 });
 
-test("a lock without a pid is stolen after the grace period", () => {
+test("a lock without a pid is stolen after the timeout", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
   ok(cwd, ["init", "run", "run"]);
   const lock = path.join(cwd, ".pstack/run/todo.md.lock");
   mkdirSync(lock);
-  const past = new Date(Date.now() - 10_000);
-  utimesSync(lock, past, past);
-  const result = run(cwd, ["add", "run", "after a crash"]);
+  const result = run(cwd, ["add", "run", "after a crash"], { PSTACK_LOCK_SPINS: "2" });
   assert.equal(result.status, 0, result.stderr);
 });

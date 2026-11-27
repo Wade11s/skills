@@ -65,14 +65,6 @@ id_check() {
 LOCKDIR=""
 LOCK_SPINS="${PSTACK_LOCK_SPINS:-200}"
 
-mtime_of() {
-  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || printf '0'
-}
-
-now_seconds() {
-  date +%s
-}
-
 steal_lock() {
   mv "$1" "$1.stale.$$" 2>/dev/null || return 1
   rm -rf "$1.stale.$$"
@@ -85,7 +77,7 @@ release() {
 }
 
 acquire() {
-  local lock="$1.lock" i=0 owner age
+  local lock="$1.lock" i=0 owner
   trap 'release' EXIT
   trap 'release; exit 143' TERM
   trap 'release; exit 130' INT
@@ -95,15 +87,13 @@ acquire() {
       if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
         steal_lock "$lock" && continue
       fi
-    else
-      # A holder died between mkdir and writing its pid. Give it a moment first.
-      age=$(($(now_seconds) - $(mtime_of "$lock")))
-      if [ "$age" -ge 5 ]; then
-        steal_lock "$lock" && continue
-      fi
     fi
     i=$((i + 1))
     if [ "$i" -gt "$LOCK_SPINS" ]; then
+      # No pid after a full timeout cannot be a live holder: it writes one immediately.
+      if [ ! -s "$lock/pid" ]; then
+        steal_lock "$lock" && continue
+      fi
       die "lock is held by a live process: $lock"
     fi
     sleep 0.05
