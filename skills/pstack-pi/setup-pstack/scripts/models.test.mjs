@@ -41,8 +41,8 @@ function run(ctx, args) {
   );
 }
 
-test("resolves exact ids and globs against the catalogue", () => {
-  const ctx = setup({ user: ["magpie/*", "antigravity/claude-opus-4-6"] });
+test("resolves exact ids and recursive globs against the catalogue", () => {
+  const ctx = setup({ user: ["magpie/**", "antigravity/claude-opus-4-6"] });
   const result = run(ctx, ["scope", "--json"]);
   assert.equal(result.status, 0, result.stderr);
   const models = JSON.parse(result.stdout).map((m) => `${m.provider}/${m.model}`);
@@ -52,6 +52,27 @@ test("resolves exact ids and globs against the catalogue", () => {
     "magpie/deepai/deepseek-v4.1",
     "antigravity/claude-opus-4-6",
   ]);
+});
+
+test("a single-star glob does not cross a provider segment", () => {
+  const ctx = setup({ user: ["magpie/*"] });
+  const result = run(ctx, ["scope"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /match no available model/);
+});
+
+test("a bare pattern fuzzy-matches a model id", () => {
+  const ctx = setup({ user: ["glm"] });
+  const result = run(ctx, ["scope"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "magpie/zhipu/glm-5.4");
+});
+
+test("a colon suffix that is not a thinking level stays in the pattern", () => {
+  const ctx = setup({ user: ["magpie/zhipu/glm-5.4:bogus"] });
+  const result = run(ctx, ["scope"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /match no available model/);
 });
 
 test("a pattern can pin a thinking level", () => {
@@ -78,7 +99,7 @@ test("no scope is an error, never the full catalogue", () => {
 });
 
 test("check accepts a scoped id and rejects the rest", () => {
-  const ctx = setup({ user: ["magpie/*"] });
+  const ctx = setup({ user: ["magpie/**"] });
   assert.equal(run(ctx, ["check", "magpie/zhipu/glm-5.4"]).status, 0);
   const rejected = run(ctx, ["check", "antigravity/claude-opus-4-6"]);
   assert.notEqual(rejected.status, 0);

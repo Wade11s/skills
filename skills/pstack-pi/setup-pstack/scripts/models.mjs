@@ -72,14 +72,37 @@ function readCatalogue(file) {
   return catalogueFrom(result.stdout);
 }
 
+const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+
 function globToRegExp(pattern) {
   let source = "";
-  for (const char of pattern) {
-    if (char === "*") source += ".*";
-    else if (char === "?") source += ".";
-    else source += char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (let i = 0; i < pattern.length; i += 1) {
+    const char = pattern[i];
+    if (char === "*") {
+      if (pattern[i + 1] === "*") {
+        source += ".*";
+        i += 1;
+      } else {
+        source += "[^/]*";
+      }
+    } else if (char === "?") {
+      source += "[^/]";
+    } else {
+      source += char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
   }
   return new RegExp(`^${source}$`, "i");
+}
+
+function matches(pattern, entry) {
+  const full = `${entry.provider}/${entry.model}`;
+  if (/[*?]/.test(pattern)) {
+    const matcher = globToRegExp(pattern);
+    return matcher.test(full) || matcher.test(entry.model);
+  }
+  if (pattern === full || pattern === entry.model) return true;
+  const needle = pattern.toLowerCase();
+  return full.toLowerCase().includes(needle);
 }
 
 function scope(patterns, catalogue) {
@@ -87,11 +110,13 @@ function scope(patterns, catalogue) {
   const seen = new Set();
 
   for (const raw of patterns) {
-    const [pattern, thinking] = raw.split(/:(?=[a-z]+$)/);
-    const matcher = globToRegExp(pattern);
+    const index = raw.lastIndexOf(":");
+    const suffix = index > 0 ? raw.slice(index + 1) : "";
+    const thinking = THINKING_LEVELS.has(suffix) ? suffix : undefined;
+    const pattern = thinking ? raw.slice(0, index) : raw;
     for (const entry of catalogue) {
+      if (!matches(pattern, entry)) continue;
       const full = `${entry.provider}/${entry.model}`;
-      if (!matcher.test(full) && !matcher.test(entry.model)) continue;
       const key = `${full}:${thinking ?? ""}`;
       if (seen.has(key)) continue;
       seen.add(key);

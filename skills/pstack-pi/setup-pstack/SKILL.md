@@ -14,14 +14,17 @@ picked from their scoped set.
 
 ## 1. Read the scoped set
 
-From this skill's directory, run:
+Run this skill's `scripts/models.mjs` from the project root, so `.pi/settings.json`
+resolves. `<skill-dir>` is the absolute path Pi reported for this skill:
 
 ```sh
-scripts/models.mjs scope
+node <skill-dir>/scripts/models.mjs scope
 ```
 
 This reads `enabledModels` (user settings, project override) and resolves it against
-`pi --list-models`. If it reports no scope, stop and tell the user to run `/scoped-models`
+`pi --list-models` with `--models` semantics: exact, `*` within one segment, `**` across
+segments, case-insensitive, a bare pattern fuzzy-matches, and a trailing `:level` pins the
+thinking level when it names a real level. If it reports no scope, stop and tell the user to run `/scoped-models`
 first, then return. Never offer the full catalogue.
 
 ## 2. Read the current config
@@ -61,10 +64,10 @@ list.
 For every chosen id:
 
 ```sh
-scripts/models.mjs check <provider/model>
+node <skill-dir>/scripts/models.mjs check <provider/model>
 ```
 
-Run it from this skill's directory.
+Run it the same way, from the project root.
 
 It must pass. `thinking` must be one of `off`, `minimal`, `low`, `medium`, `high`, `xhigh`,
 `max`. Pi clamps a level the model does not support, so do not try to predict that here.
