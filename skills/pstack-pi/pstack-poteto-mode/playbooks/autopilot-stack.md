@@ -1,5 +1,7 @@
 ### Autopilot-stack
 
+Delegation and models follow [`../references/harness.md`](../references/harness.md).
+
 Run the Autopilot-full playbook, but do not merge.
 
 1. **In place of step 5, stop at verified.** Stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. Every audit prompt names this file, so the no-merge rule is in scope.

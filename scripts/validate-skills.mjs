@@ -491,6 +491,9 @@ async function main() {
 
     const links = new Set();
     for (const [file, text] of texts) {
+      if (file !== MAPPING_FILE && /rex_spawn/.test(text) && !/harness\.md/.test(text)) {
+        fail(file, "calls rex_spawn without pointing at the harness");
+      }
       checkForbidden(file, text);
       checkReferences(file, text, skillNames);
 
