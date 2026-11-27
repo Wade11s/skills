@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Arena
 
-Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) and copy the six phases (Frame, Fan out, Cross-judge, Pick, Graft, Verify) into it before launching anything. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md); Arena owns the shape.
+Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) and copy the six phases (Frame, Fan out, Cross-judge, Pick, Graft, Verify) into it before launching anything. Every phase ends with `todo.sh done <slug> <id>`; the file wins over the reply. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md); Arena owns the shape.
 
 ## Phase A: Frame
 
@@ -25,7 +25,7 @@ If a candidate produces no output, proceed with N-1 and note the dropout.
 
 ## Phase C: Cross-judge
 
-After all Phase B candidates complete, delegate one read-only judge from the `arena cross-judge pool` role, resolved per the harness. The judge must come from a provider other than the parent's: compare with `$PI_PROVIDER` and take the first pool entry that differs. If no entry qualifies, skip the judge and say the vendor check could not run. When an entry leaves the scoped set, the harness resolves it or the seat is skipped, and you say which. While you read in Phase D, the judge scores each candidate, by path label, on each rubric criterion and recommends a base.
+After all Phase B candidates complete, delegate one judge whose tool set is `read`, `grep`, and `find`, from the `arena cross-judge pool` role, resolved per the harness. The judge must come from a provider other than the parent's: compare with `$PI_PROVIDER` and take the first pool entry that differs. If no entry qualifies, skip the judge and say the vendor check could not run. When an entry leaves the scoped set, the harness resolves it or the seat is skipped, and you say which. While you read in Phase D, the judge scores each candidate, by path label, on each rubric criterion and recommends a base.
 
 ## Phase D: Pick a base
 

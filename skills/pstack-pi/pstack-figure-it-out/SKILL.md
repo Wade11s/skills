@@ -10,7 +10,7 @@ When the task matches no playbook, design one. The deliverable before any code i
 
 ## Start
 
-Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) whose first item is to read the Principles section of the **poteto-mode** skill. Then add the phases below as items. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md).
+Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) whose first item is to read the Principles section of the **poteto-mode** skill. Then add the phases below as items. Every phase ends with `todo.sh done <slug> <id>`; the file wins over the reply. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md).
 
 ## Phase A: Frame
 

@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 ## Start
 
-Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) and copy the four phases into it before launching anything. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md).
+Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "<title>"`) and copy the four phases into it before launching anything. Every phase ends with `todo.sh done <slug> <id>`; the file wins over the reply. Delegation and models follow [`../pstack-poteto-mode/references/harness.md`](../pstack-poteto-mode/references/harness.md).
 
 1. Frame
 2. Fan out
@@ -26,7 +26,7 @@ Create the run's todo file (`../pstack-poteto-mode/scripts/todo.sh init <slug> "
 
 Spawn the workers, at most four at once, each in its own output directory, and wait with `rex_wait {handles, any: true}`. Close every worker with `rex_stop {handle, remove: true}` once its result is read.
 
-When a worker must start from a non-default pushed branch, check that branch out in the worker's working directory.
+When a worker must start from a non-default pushed branch, give it its own `git worktree` checkout of that branch. Never check a branch out in the parent's working tree.
 
 Every brief stands alone. Include the goal, scope, exact slice or race arm, how to verify, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED` with evidence. A worker that can prove a defect reports `ISSUES` and lists every issue it can prove, not only the first.
 
