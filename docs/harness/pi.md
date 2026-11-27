@@ -87,14 +87,18 @@ Pick the first tier that exists in this session.
 **Tier 2: headless Pi.** Use when rex is absent.
 
 ```sh
-(cd <cwd> && pi --mode json -p --no-session \
+(cd <cwd> && pi --mode json -p --no-session [--approve] \
    [--model <provider/model>] [--thinking <level>] [--tools read,grep,find] \
    [--append-system-prompt <absolute-persona-file>] \
    "Read <abs>/pstack-poteto-mode/worker.md first. Task: <task>")
 ```
 
-- Pi has no `--cwd` flag. Set the process working directory so project config, resources,
-  and relative paths resolve in the delegate's checkout.
+- Pi has no `--cwd` flag. Set the process working directory so relative paths resolve in
+  the delegate's checkout.
+- JSON mode cannot show the project-trust prompt. With the default
+  `defaultProjectTrust: "ask"`, a run without `--approve` skips trust-gated project config
+  and resources. Pass `--approve` when the checkout is one the user trusts; otherwise
+  expect `.pi` resources to be absent.
 - One turn per process. No steering and no resume: a follow-up is a new process with the
   earlier result pasted into the brief.
 - Parse the JSON event stream and keep the last assistant message. Cap the result at 50 KB;
