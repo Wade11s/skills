@@ -16,8 +16,8 @@ tickets: `scripts/models.mjs` with `setup-pstack`, and
 - A skill that runs another skill reads it and follows it:
   `read <this skill dir>/../pstack-<name>/SKILL.md`. Do not call a skill catalog, and do
   not assume a `Skill` tool exists.
-- `` the `**x** skill` `` means the sibling directory `pstack-x`. The short upstream name
-  stays in prose; only the command form carries the prefix.
+- A phrase like `Run the **arena** skill` means the sibling directory `pstack-arena`. The
+  short upstream name stays in prose; only the command form carries the prefix.
 - Sibling relative paths are the only correct cross-skill form. They resolve identically
   after a git checkout (`skills/pstack-pi/pstack-a/`), after `npx skills add`, which
   flattens skills into `.agents/skills/pstack-a/`, and after `pi install`, which keeps the
@@ -81,17 +81,20 @@ Pick the first tier that exists in this session.
 - Spawn, do independent local work, then `rex_wait {handles, any: true}`. Process finished
   handles and wait again for the rest.
 - Read the full result. `rex-subagent logs <handle>` when the tool result is thin.
-- Clean up with `rex_stop {remove: true}` (rule 6).
+- Clean up with `rex_stop {handle, remove: true}` (rule 6), and check that it reports
+  `removed: true`.
 
 **Tier 2: headless Pi.** Use when rex is absent.
 
 ```sh
-pi --mode json -p --no-session \
+(cd <cwd> && pi --mode json -p --no-session \
    [--model <provider/model>] [--thinking <level>] [--tools read,grep,find] \
-   [--append-system-prompt <persona-file>] \
-   "Read <abs>/pstack-poteto-mode/worker.md first. Task: <task>"
+   [--append-system-prompt <absolute-persona-file>] \
+   "Read <abs>/pstack-poteto-mode/worker.md first. Task: <task>")
 ```
 
+- Pi has no `--cwd` flag. Set the process working directory so project config, resources,
+  and relative paths resolve in the delegate's checkout.
 - One turn per process. No steering and no resume: a follow-up is a new process with the
   earlier result pasted into the brief.
 - Parse the JSON event stream and keep the last assistant message. Cap the result at 50 KB;
@@ -132,25 +135,27 @@ once with the gap named, then record the gap. A gap never counts as a pass.
 {
   "version": 1,
   "roles": {
-    "feature, refactoring": { "provider": "magpie", "model": "zhipu/glm-5.4", "thinking": "xhigh" },
-    "bug-fix": { "provider": "magpie", "model": "zhipu/glm-5.4", "thinking": "xhigh" },
+    "feature, refactoring": { "provider": "<provider>", "model": "<model>", "thinking": "xhigh" },
+    "bug-fix": { "provider": "<provider>", "model": "<model>", "thinking": "xhigh" },
     "arena runners": [
-      { "provider": "magpie", "model": "devin/gemini-4-neon", "thinking": "xhigh" },
-      { "provider": "another-provider", "model": "another-model", "thinking": "high" }
+      { "provider": "<provider-a>", "model": "<model-a>", "thinking": "xhigh" },
+      { "provider": "<provider-b>", "model": "<model-b>", "thinking": "high" }
     ]
   },
   "fallback": {
-    "code": { "provider": "magpie", "model": "zhipu/glm-5.4", "thinking": "high" },
-    "judgment": { "provider": "magpie", "model": "zhipu/glm-5.4", "thinking": "high" },
-    "panel": [{ "provider": "magpie", "model": "devin/gemini-4-neon", "thinking": "high" }],
-    "workers": { "provider": "magpie", "model": "zhipu/glm-5.3-flash", "thinking": "medium" }
+    "code": { "provider": "<provider>", "model": "<model>", "thinking": "high" },
+    "judgment": { "provider": "<provider>", "model": "<model>", "thinking": "high" },
+    "panel": [{ "provider": "<provider-b>", "model": "<model-b>", "thinking": "high" }],
+    "workers": { "provider": "<provider>", "model": "<model-c>", "thinking": "medium" }
   },
   "on_unassigned": "ask"
 }
 ```
 
-- The repository ships no model names. Every value is chosen by the user in `setup-pstack`.
-- There is no `inherit-parent` and no `auto`. A role either names a model or the step stops.
+- The repository ships no model names. Every value above is a placeholder the user replaces
+  in `setup-pstack`.
+- There is no implicit parent-model fallback and no `auto` value. A role either names a
+  model or the step stops.
 
 ### 5.2 Role families
 
@@ -165,23 +170,26 @@ once with the gap named, then record the gap. A gap never counts as a pass.
 
 Scoped models only: `enabledModels` in the user settings, overridden by the project
 settings, using the same format as `--models` (exact id, fuzzy match, case-insensitive
-glob, optional `:thinking` suffix). `scripts/models.mjs scope` (shipped with `setup-pstack`) resolves those patterns against
-`pi --list-models` and prints the usable set. Never offer the full catalogue.
+glob, optional `:thinking` suffix). `scripts/models.mjs scope` (shipped with
+`setup-pstack`) resolves those patterns against `pi --list-models` and prints the usable
+set. Never offer the full catalogue.
 
 `--models` is a per-run flag that a skill cannot read. If a user scopes per run, the same
 ids must also be in `enabledModels` for setup to see them.
 
 ### 5.4 Resolution order
 
-For a role, take the first step that yields a model:
+Every candidate below comes from the current scoped set. A model outside it is not a
+candidate. For a role, take the first step that yields one:
 
 1. The role's entry, if it is in the scoped set.
-2. The nearest sibling in the same family: same provider, and the first dash/dot/underscore
-   segment of the model basename is the same (`claude`, `glm`, `deepseek`, `gemini`, `k3`).
-   Among those, prefer the longest common prefix with the intended id, then the shortest id.
-   Pass the intended thinking level through.
-3. `fallback[family]`. For a list role, fill the missing seats from `panel` in order; if it
-   still falls short, reduce the panel and say so.
+2. The nearest sibling, if it is in the scoped set: same provider, and the first segment of
+   the model basename (split on `-`, `.`, `_`) is identical. Among those, prefer the longest
+   common prefix with the intended id, then the shortest id. Pass the intended thinking
+   level through.
+3. `fallback[family]`, if it is in the scoped set. For a list role, fill the missing seats
+   from `panel` in order, scoped entries only; if it still falls short, reduce the panel and
+   say so.
 4. Stop. Report the role and the fix: run `/skill:setup-pstack`.
 
 Thinking levels are `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Pi clamps a
@@ -200,7 +208,8 @@ An unassigned role with `on_unassigned: "ask"` sends the reader to
 
 ## 6. Session facts
 
-Pi gives every shell command these values:
+Pi injects these into commands run by its shell tool. They are not available to commands a
+person types in their own terminal.
 
 | Variable | Use |
 |---|---|
@@ -209,9 +218,15 @@ Pi gives every shell command these values:
 | `PI_PROVIDER`, `PI_MODEL` | parent vendor and model for panel and judge decisions |
 | `PI_REASONING_LEVEL` | the parent's current thinking level |
 
+`PI_SESSION_FILE` is unset for ephemeral sessions and for headless delegates, which run
+`--no-session`. When it is unset, say the transcript is unavailable instead of guessing a
+path.
+
 Earlier sessions for the same working directory live under
-`~/.pi/agent/sessions/--<cwd with / \ : replaced by ->--/*.jsonl`. Read only this
-workspace's directory. Never scan another workspace's sessions.
+`~/.pi/agent/sessions/--<cwd>--/*.jsonl`, where a leading `/` or `\` is removed from the
+cwd and every `/`, `\`, and `:` becomes `-` (`/a/b` becomes `--a-b--`). `--session-dir`,
+`PI_CODING_AGENT_SESSION_DIR`, and the `sessionDir` setting move that directory. Read only
+this workspace's directory. Never scan another workspace's sessions.
 
 ## 7. Progress: the run's todo file
 
@@ -220,7 +235,7 @@ A reply checklist is not progress. Progress is a file and a script.
 - State root: `${PSTACK_STATE_DIR:-.pstack}/<task-slug>/`.
 - Files: `todo.md` (steps), `decisions.tsv` (the decision log), optional `notes.md`.
 - Script: `../pstack-poteto-mode/scripts/todo.sh` (shipped with the orchestrator), shared by
-every phased skill.
+  every phased skill.
 - Format:
 
   ```markdown
@@ -230,14 +245,14 @@ every phased skill.
   - [x] 02 repro - repro.ts fails at HEAD (2026-11-27T10:12:00Z)
   ```
 
-- Commands: `init <slug> "<title>"`, `add <slug> "<text>"`, `done <slug> <id> [--note]`,
+- Commands: `init <slug> "<title>"`, `add <slug> "<text>"`, `done <slug> <id> [--note "<note>"]`,
   `open <slug>`, `check <slug>`.
 - A phase is not complete until `todo.sh done` exits 0. When the file and the reply
   disagree, the file wins.
 - A resume reads `todo.sh open` before doing anything else.
 - Default location is gitignored. A run that must survive the machine, or that a reviewer
-  must audit, sets `PSTACK_STATE_DIR=docs/pstack/<slug>` so the file is committed and
-  pushed with the work.
+  must audit, sets `PSTACK_STATE_DIR=docs/pstack`, so the run lands at
+  `docs/pstack/<task-slug>/` and is committed and pushed with the work.
 
 ## 8. Long runs
 
