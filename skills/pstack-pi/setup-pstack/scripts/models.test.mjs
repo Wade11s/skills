@@ -68,6 +68,13 @@ test("a bare pattern fuzzy-matches a model id", () => {
   assert.equal(result.stdout.trim(), "magpie/zhipu/glm-5.4");
 });
 
+test("a bare provider name does not fuzzy-match every model", () => {
+  const ctx = setup({ user: ["magpie"] });
+  const result = run(ctx, ["scope"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /match no available model/);
+});
+
 test("a colon suffix that is not a thinking level stays in the pattern", () => {
   const ctx = setup({ user: ["magpie/zhipu/glm-5.4:bogus"] });
   const result = run(ctx, ["scope"]);

@@ -101,8 +101,8 @@ function matches(pattern, entry) {
     return matcher.test(full) || matcher.test(entry.model);
   }
   if (pattern === full || pattern === entry.model) return true;
-  const needle = pattern.toLowerCase();
-  return full.toLowerCase().includes(needle);
+  // Pi's fuzzy match is a case-insensitive substring of the model id, not of provider/id.
+  return entry.model.toLowerCase().includes(pattern.toLowerCase());
 }
 
 function scope(patterns, catalogue) {
