@@ -22,3 +22,4 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/validate-skills.mjs
+      - run: node --test skills/pstack-pi/pstack-poteto-mode/scripts/todo.test.mjs

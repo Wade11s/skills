@@ -43,9 +43,10 @@ every declared skill to exist.
 
 ## Platform rules
 
-Runtime rules live in [`docs/harness/pi.md`](docs/harness/pi.md): delegation tiers, role
-models, session variables, and the todo file. A skill points there instead of restating
-them. Repository-level rules stay in this file.
+Runtime rules live in
+[`pstack-poteto-mode/references/harness.md`](skills/pstack-pi/pstack-poteto-mode/references/harness.md):
+delegation tiers, role models, session variables, and the todo file. A skill points there
+instead of restating them. `docs/harness/pi.md` is a pointer to that file. Repository-level rules stay in this file.
 
 ## Frontmatter
 
@@ -79,7 +80,9 @@ The port targets Pi only. Cursor-only names must not survive:
 `inherit-parent`, `create-skill`, `/loop`, and hardcoded vendor model slugs
 (`claude-*`, `gemini-*`, `grok-*`).
 
-Platform notes belong in `docs/harness/pi.md`, not in skill bodies.
+Platform notes belong in `pstack-poteto-mode/references/harness.md`, not in skill bodies.
+The one place Cursor names may appear is a `<!-- pstack:mapping:start -->` block in that
+file; the validator rejects a mapping block anywhere else.
 
 ## Upstream
 

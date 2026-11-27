@@ -25,6 +25,13 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
+const MAPPING_FILE = path.join(
+  SKILLS_DIR,
+  "pstack-pi",
+  "pstack-poteto-mode",
+  "references",
+  "harness.md",
+);
 const MANIFEST = path.join(ROOT, "scripts", "skill-manifest.json");
 const NAME_PREFIX = "pstack-";
 const NAME_ALLOWLIST = new Set(["setup-pstack"]);
@@ -298,11 +305,43 @@ function localLinkTargets(file, text) {
 }
 
 function checkForbidden(file, text) {
-  for (const [pattern, label] of FORBIDDEN_TOKENS) {
-    const match = pattern.exec(text);
-    if (match) {
-      fail(file, `forbidden token (${label}): ${match[0]}`, lineOf(text, match.index));
+  // The one place Cursor names may appear is the mapping block the harness owns.
+  let inMapping = false;
+  let blocks = 0;
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (/<!--\s*pstack:mapping:start\s*-->/.test(line)) {
+      if (file !== MAPPING_FILE) {
+        fail(file, "mapping block is only allowed in references/harness.md", i + 1);
+      }
+      if (inMapping) {
+        fail(file, "nested mapping block", i + 1);
+      }
+      inMapping = true;
+      blocks += 1;
+      continue;
     }
+    if (/<!--\s*pstack:mapping:end\s*-->/.test(line)) {
+      if (!inMapping) {
+        fail(file, "mapping block ends without a start", i + 1);
+      }
+      inMapping = false;
+      continue;
+    }
+    if (inMapping) continue;
+    for (const [pattern, label] of FORBIDDEN_TOKENS) {
+      const match = pattern.exec(line);
+      if (match) {
+        fail(file, `forbidden token (${label}): ${match[0]}`, i + 1);
+      }
+    }
+  }
+  if (inMapping) {
+    fail(file, "mapping block is not closed", lines.length);
+  }
+  if (file === MAPPING_FILE && blocks !== 1) {
+    fail(file, `expected exactly one mapping block, found ${blocks}`);
   }
 }
 
