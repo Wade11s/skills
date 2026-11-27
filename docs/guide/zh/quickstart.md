@@ -60,7 +60,7 @@ scope，不会退回全量模型目录。
 | 模型不在 scoped 集合 | 重选；离开集合后由对应族的 fallback 兜底 |
 | `todo.sh` 报 stale lock | `todo.sh unlock <slug>`；不会自动抢锁 |
 | 技能没有自动触发 | 正常，pstack 技能只能显式调用 |
-| playbook 不存在 | 该 playbook 还没移植，编排器会报名字 |
+| playbook 不存在 | 检查名称；22 个 playbook 都已随包提供 |
 
 ## 6. 卸载
 

@@ -2,7 +2,7 @@
 
 poteto-mode is one person's style. The playbooks, routing, and model roles underneath it work just as well with yours. This page covers generating a personal mode, capturing lessons from a session, fixing the repo so agents stop repeating mistakes, authoring a focused skill, and testing a skill change before you trust it.
 
-Start smaller than you think. You don't need many skills on day one, or even this whole plugin. Prompt plainly, watch where agents fail, and add a skill or a check when the same failure shows up twice.
+Start smaller than you think. You don't need many skills on day one, or even this whole pack. Prompt plainly, watch where agents fail, and add a skill or a check when the same failure shows up twice.
 
 ## Generate your own mode with `/skill:pstack-automate-me`
 
