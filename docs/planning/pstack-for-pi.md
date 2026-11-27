@@ -316,7 +316,7 @@ Pi 没有 todo 工具，所以用**状态文件 + 强制脚本**保证进度可�
   - `todo.sh open <slug>` → `id<TAB>text`
   - `todo.sh check <slug>` → 校验格式，非零退出即中止
 - 文件格式：`<!-- pstack:todo v1 -->` 头 + 每行 `- [ ] NN text` / `- [x] NN text`，编号单调递增；脚本原子写入、幂等、拒绝重复项。
-- 提交策略：默认 `.pstack/` 进 `.gitignore`；需要审计或跨机恢复的长任务（autopilot）用 `PSTACK_STATE_DIR=docs/pstack/<slug>` 落进仓库并随提交推送。
+- 提交策略：默认 `.pstack/` 进 `.gitignore`；需要审计或跨机恢复的长任务（autopilot）用 `PSTACK_STATE_DIR=docs/pstack` 落到 `docs/pstack/<slug>/` 并随提交推送。
 - 执行约束：每个阶段式技能第一步是 `init` 或 `open`（续跑），每个阶段结束必须 `done`；回复里的进度与文件冲突时**以文件为准**。`session-pickup` 用 `todo.sh open` 重建状态。
 - v0.1 **只做文件 + 脚本**。turn 结束时校验 todo 与回复一致性的 Pi 扩展不上，等出现实际漂移再加。
 - 长任务仍可叠加 `/goal`（用户自己开），但 todo 文件是步骤级的事实来源，两者不重叠。
@@ -450,7 +450,7 @@ Pi 没有 todo 工具，所以用**状态文件 + 强制脚本**保证进度可�
 | 3 | principles 粒度 | 与上游 1:1，24 个独立技能 | 均 `disable-model-invocation: true` |
 | 4 | 子代理 | rex 优先 → headless `pi --mode json -p --no-session` → 串行内联 | 三个适配器共享 brief 与模型配置；rex 适配纳入 v0.1（issue #11） |
 | 5 | 模型配置 | 用户从 scoped models 逐角色指定；schema `version: 1`；无默认、无 `inherit-parent` | 文件 `~/.pi/agent/pstack-models.json`；解析链同 family → `fallback[角色族]` → 停 |
-| 6 | 进度 | `.pstack/<slug>/todo.md` + `todo.sh`；v0.1 不加硬强制扩展 | 默认 gitignore；审计跑用 `docs/pstack/<slug>` |
+| 6 | 进度 | `.pstack/<slug>/todo.md` + `todo.sh`；v0.1 不加硬强制扩展 | 默认 gitignore；审计跑用 `PSTACK_STATE_DIR=docs/pstack` |
 | 7 | 引用 | 保留 `**x** skill` 短名，harness 一条解析规则 | validator 校验可解析 |
 | 8 | 厂商专属规则 | 删除；面板由用户自选 | B1 |
 | 9 | `/loop` | 不映射，删循环语义 | 代价：周期审计改为按回报/检查触发 |

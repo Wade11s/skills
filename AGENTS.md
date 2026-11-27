@@ -33,6 +33,12 @@ skills/<pack>/<skill>/{playbooks,references,scripts,assets}/...
 - Names are lowercase letters, digits, and hyphens, at most 64 characters. They never
   start or end with a hyphen and never contain two in a row.
 
+## Platform rules
+
+Runtime rules live in [`docs/harness/pi.md`](docs/harness/pi.md): delegation tiers, role
+models, session variables, and the todo file. A skill points there instead of restating
+them. Repository-level rules stay in this file.
+
 ## Frontmatter
 
 Required: `name`, `description`. Supported optional fields: `license`,
