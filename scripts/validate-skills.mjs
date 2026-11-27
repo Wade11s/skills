@@ -2,35 +2,40 @@
 /**
  * Validate every skill in this repository against the rules recorded in AGENTS.md.
  *
- * The checks mirror what the `skills` CLI and Pi will accept at install time, plus
- * the project rules that keep a ported pack coherent:
+ * The checks mirror what the `skills` CLI and Pi accept at install time, plus the
+ * repository rules that keep a ported pack coherent:
  *
- *   1. discovery: no SKILL.md at the pack root, no skill deeper than 3 levels
- *   2. identity: name matches the directory (`pstack-<dir>`, allowlisted exceptions)
+ *   1. discovery: no SKILL.md shadows a pack, no skill deeper than 3 levels,
+ *      no nested skill inside a skill
+ *   2. identity: name matches the directory, prefixed unless allowlisted
  *   3. frontmatter: required fields, length limits, no Cursor-only keys
- *   4. forbidden tokens: no leftover Cursor-only tool, path, model, or command names
- *   5. references: every local link, every `/skill:*` command, every `**x** skill`
- *   6. orphans: every playbook, reference, and root markdown file is linked
+ *   4. forbidden tokens: no leftover Cursor-only tool, path, model, or command names,
+ *      in SKILL.md and in every supporting markdown file
+ *   5. references: local links resolve and stay installable, `/skill:*` commands
+ *      resolve, `**x** skill` resolves to a sibling skill
+ *   6. orphans: every playbook, reference, and root markdown file is reachable
  *
  * Usage: node scripts/validate-skills.mjs [--json]
  */
 
 import { existsSync } from "node:fs";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
-const PACK_DIR = path.join(SKILLS_DIR, "pstack-pi");
 const NAME_PREFIX = "pstack-";
 const NAME_ALLOWLIST = new Set(["setup-pstack"]);
 const MAX_CONTAINER_DEPTH = 3;
+const MAX_SCAN_DEPTH = 8;
+const SKIP_DIRS = new Set([".git", "node_modules", "assets", "scripts"]);
 const FORBIDDEN_FRONTMATTER_KEYS = new Set(["icon", "color", "paths", "alwaysApply"]);
 
 const FORBIDDEN_TOKENS = [
   [/\bsubagent_type\b/, "Cursor subagent_type"],
   [/`Task`/, "Cursor Task tool"],
+  [/\bTask\s*\(/, "Cursor Task tool"],
   [/\bAskQuestion\b/, "Cursor AskQuestion tool"],
   [/\brun_in_background\b/, "Cursor run_in_background flag"],
   [/\benvironment:\s*"?cloud"?/, "Cursor cloud execution"],
@@ -40,31 +45,22 @@ const FORBIDDEN_TOKENS = [
   [/\bBugbot\b/, "Cursor Bugbot"],
   [/\bapi2\.cursor\.sh\b/, "Cursor automations endpoint"],
   [/\bSendToUser\b|\bupdate_state\b/, "Cursor automations API"],
-  [/(?:~|\.)?\/\.cursor\//, "Cursor config path"],
-  [/\.cursor\/(?:skills|rules|plugins)\//, "Cursor skills/rules path"],
+  [/\.cursor\//, "Cursor config path"],
   [/agent-transcripts\//, "Cursor transcript path"],
   [/\binherit-parent\b/, "removed model alias"],
   [/\bcreate-skill\b/, "Cursor built-in create-skill"],
-  [/\/loop\b/, "Cursor /loop command"],
+  [/(?<![\w/])\/loop\b/, "Cursor /loop command"],
   [/\bclaude-(?:opus|sonnet|haiku|fable)-\d/, "Cursor model slug"],
+  [/\bclaude-?\d/, "Cursor model slug"],
   [/\bgemini-\d/, "Cursor model slug"],
   [/\bgrok-\d/, "Cursor model slug"],
   [/\bopus 5\.5|\bfable 5\.2|\bgemini 4\b/i, "Cursor model name"],
 ];
 
 const errors = [];
-const warnings = [];
 
 function fail(file, message, line) {
-  errors.push({ file: rel(file), line, message });
-}
-
-function warn(file, message, line) {
-  warnings.push({ file: rel(file), line, message });
-}
-
-function rel(file) {
-  return path.relative(ROOT, file) || ".";
+  errors.push({ file: path.relative(ROOT, file) || ".", line, message });
 }
 
 function unquote(value) {
@@ -78,7 +74,14 @@ function unquote(value) {
   return trimmed;
 }
 
-export function parseFrontmatter(text) {
+function stripComment(value) {
+  if (value.startsWith('"') || value.startsWith("'")) return value;
+  const index = value.indexOf(" #");
+  return index === -1 ? value : value.slice(0, index);
+}
+
+export function parseFrontmatter(input) {
+  const text = input.replace(/^\uFEFF/, "");
   if (!text.startsWith("---")) {
     return { data: {}, body: text, error: "missing frontmatter" };
   }
@@ -101,7 +104,10 @@ export function parseFrontmatter(text) {
 
     const takeIndented = () => {
       const buffer = [];
-      while (i + 1 < lines.length && (/^\s/.test(lines[i + 1]) || lines[i + 1].trim() === "")) {
+      while (
+        i + 1 < lines.length &&
+        (/^\s/.test(lines[i + 1]) || lines[i + 1].trim() === "")
+      ) {
         buffer.push(lines[(i += 1)]);
       }
       return buffer;
@@ -122,27 +128,64 @@ export function parseFrontmatter(text) {
       continue;
     }
 
-    data[key] = unquote(rest);
+    const scalar = unquote(stripComment(rest));
+    const continuation = takeIndented()
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    data[key] = continuation.length > 0 ? `${scalar} ${continuation.join(" ")}`.trim() : scalar;
   }
 
   return { data, body, error: null };
 }
 
+async function listMarkdown(dir, options = {}) {
+  const out = [];
+  const skip = options.skip ?? SKIP_DIRS;
+  const walk = async (current) => {
+    const entries = await readdir(current, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name.startsWith(".") || skip.has(entry.name)) continue;
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+      } else if (entry.name.endsWith(".md")) {
+        out.push(full);
+      }
+    }
+  };
+  await walk(dir);
+  return out;
+}
+
 async function findSkills() {
   const skills = [];
-  const depthErrors = [];
-
   if (!existsSync(SKILLS_DIR)) {
     fail(SKILLS_DIR, "skills/ does not exist");
-    return { skills, depthErrors };
+    return skills;
   }
-
   if (existsSync(path.join(SKILLS_DIR, "SKILL.md"))) {
     fail(SKILLS_DIR, "skills/SKILL.md shadows every skill below it");
   }
-  if (existsSync(path.join(PACK_DIR, "SKILL.md"))) {
-    fail(PACK_DIR, "skills/pstack-pi/SKILL.md shadows every skill in the pack");
-  }
+
+  const nestedSkills = async (dir) => {
+    const found = [];
+    const walk = async (current) => {
+      const entries = await readdir(current, { withFileTypes: true }).catch(() => []);
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name === "node_modules") {
+          continue;
+        }
+        const full = path.join(current, entry.name);
+        if (existsSync(path.join(full, "SKILL.md"))) {
+          found.push(full);
+          continue;
+        }
+        await walk(full);
+      }
+    };
+    await walk(dir);
+    return found;
+  };
 
   const walk = async (dir, depth) => {
     const entries = await readdir(dir, { withFileTypes: true });
@@ -153,34 +196,40 @@ async function findSkills() {
       const child = path.join(dir, entry.name);
       if (existsSync(path.join(child, "SKILL.md"))) {
         if (depth > MAX_CONTAINER_DEPTH) {
-          depthErrors.push(child);
           fail(child, `skill is nested deeper than ${MAX_CONTAINER_DEPTH} levels`);
-        } else {
-          skills.push(child);
+          continue;
         }
+        const nested = await nestedSkills(child);
+        for (const nestedSkill of nested) {
+          fail(nestedSkill, "skill folders may not contain another SKILL.md");
+        }
+        if (depth === 1 && nested.length > 0) {
+          fail(path.join(child, "SKILL.md"), "SKILL.md at the pack root shadows every skill below it");
+          continue;
+        }
+        skills.push(child);
         continue;
       }
-      if (depth >= MAX_CONTAINER_DEPTH) {
-        const nested = await readdir(child, { withFileTypes: true });
-        if (nested.some((item) => item.isDirectory() && existsSync(path.join(child, item.name, "SKILL.md")))) {
-          depthErrors.push(child);
-          fail(child, `nested skill exceeds the ${MAX_CONTAINER_DEPTH}-level discovery limit`);
-        }
-        continue;
-      }
+      if (depth >= MAX_SCAN_DEPTH) continue;
       await walk(child, depth + 1);
     }
   };
 
   await walk(SKILLS_DIR, 1);
-  return { skills, depthErrors };
+  return skills;
 }
 
 function lineOf(text, index) {
   return text.slice(0, index).split("\n").length;
 }
 
-function checkLinks(dir, file, text, body) {
+function isInside(parent, target) {
+  const relative = path.relative(parent, target);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function localLinkTargets(file, text) {
+  const targets = [];
   let inFence = false;
   for (const [index, line] of text.split("\n").entries()) {
     if (/^\s*```/.test(line)) {
@@ -188,22 +237,28 @@ function checkLinks(dir, file, text, body) {
       continue;
     }
     if (inFence) continue;
-
     for (const match of line.matchAll(/\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
       const target = match[1];
       if (/^(?:https?:|mailto:|#|tel:)/i.test(target)) continue;
       if (target.includes("://") || target.startsWith("//")) continue;
       const clean = target.split("#")[0];
       if (!clean) continue;
-      const resolved = path.resolve(dir, clean);
-      if (!existsSync(resolved)) {
-        fail(file, `link target does not exist: ${target}`, index + 1);
-      }
+      targets.push({ target, line: index + 1 });
+    }
+  }
+  return targets;
+}
+
+function checkForbidden(file, text) {
+  for (const [pattern, label] of FORBIDDEN_TOKENS) {
+    const match = pattern.exec(text);
+    if (match) {
+      fail(file, `forbidden token (${label}): ${match[0]}`, lineOf(text, match.index));
     }
   }
 }
 
-function checkCommands(file, text, skillNames) {
+function checkReferences(file, text, skillNames) {
   let inFence = false;
   for (const [index, line] of text.split("\n").entries()) {
     if (/^\s*```/.test(line)) {
@@ -221,79 +276,57 @@ function checkCommands(file, text, skillNames) {
     }
 
     for (const match of line.matchAll(/\*\*([a-z][a-z0-9-]*)\*\*\s+skill\b/g)) {
-      const candidate = `${NAME_PREFIX}${match[1]}`;
-      if (!skillNames.has(candidate)) {
-        fail(file, `skill reference does not resolve: **${match[1]}** skill (expected ${candidate})`, index + 1);
+      const name = match[1];
+      if (!skillNames.has(name) && !skillNames.has(`${NAME_PREFIX}${name}`)) {
+        fail(
+          file,
+          `skill reference does not resolve: **${name}** skill (expected ${NAME_PREFIX}${name})`,
+          index + 1,
+        );
       }
     }
   }
 }
 
-function checkForbidden(file, text) {
-  for (const [pattern, label] of FORBIDDEN_TOKENS) {
-    const match = pattern.exec(text);
-    if (match) {
-      fail(file, `forbidden token (${label}): ${match[0]}`, lineOf(text, match.index));
-    }
-  }
+function titleOf(basename) {
+  return basename.replace(/\.md$/, "").replace(/-/g, " ").toLowerCase();
 }
 
-async function collectMarkdown(dir) {
-  const out = [];
-  const walk = async (current) => {
-    const entries = await readdir(current, { withFileTypes: true }).catch(() => []);
-    for (const entry of entries) {
-      const full = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name === "scripts" || entry.name === "assets" || entry.name.startsWith(".")) continue;
-        await walk(full);
-      } else if (entry.name.endsWith(".md")) {
-        out.push(full);
-      }
-    }
-  };
-  await walk(dir);
-  return out;
-}
-
-function checkOrphans(dir, skillFile, files, texts) {
-  const requiredDirs = ["playbooks", "references"];
+function checkOrphans(skillDir, skillFile, skillText, files, links) {
   for (const markdown of files) {
     if (markdown === skillFile) continue;
-    const relative = path.relative(dir, markdown).split(path.sep).join("/");
-    const inRequiredDir = requiredDirs.some((name) => relative.startsWith(`${name}/`));
+    const relative = path.relative(skillDir, markdown).split(path.sep).join("/");
+    const inReferences = relative.startsWith("references/");
+    const inPlaybooks = relative.startsWith("playbooks/");
     const atRoot = !relative.includes("/");
-    if (!inRequiredDir && !atRoot) continue;
+    if (!inReferences && !inPlaybooks && !atRoot) continue;
 
-    const prefixes = [];
-    let cursor = relative;
-    while (cursor.includes("/")) {
-      cursor = cursor.slice(0, cursor.lastIndexOf("/"));
-      prefixes.push(`${cursor}/`);
+    if (links.has(markdown)) continue;
+
+    if (inPlaybooks) {
+      const title = titleOf(path.basename(markdown));
+      const kebab = path.basename(markdown, ".md");
+      const lower = skillText.toLowerCase();
+      if (lower.includes(title) || lower.includes(kebab)) continue;
+    } else if (atRoot) {
+      if (skillText.includes(path.basename(markdown))) continue;
     }
 
-    const referenced = texts.some(({ file, text }) => {
-      if (file === markdown) return false;
-      return text.includes(relative) || prefixes.some((prefix) => text.includes(prefix));
-    });
-
-    if (!referenced) {
-      fail(markdown, `orphan file: no skill file links ${relative}`);
-    }
+    const where = inReferences ? "links" : "mentions";
+    fail(markdown, `orphan file: SKILL.md neither ${where} nor covers ${relative}`);
   }
 }
 
 async function main() {
   const json = process.argv.includes("--json");
-  const { skills } = await findSkills();
-
+  const skills = await findSkills();
   const records = [];
+
   for (const dir of skills) {
     const skillFile = path.join(dir, "SKILL.md");
-    const text = await readFile(skillFile, "utf8");
+    const text = (await readFile(skillFile, "utf8")).replace(/^\uFEFF/, "");
     const { data, error } = parseFrontmatter(text);
     const directory = path.basename(dir);
-    const expectedName = directory;
 
     if (error) {
       fail(skillFile, error);
@@ -303,11 +336,11 @@ async function main() {
     if (typeof data.name !== "string" || data.name.trim() === "") {
       fail(skillFile, "frontmatter is missing `name`");
     } else {
+      if (data.name !== directory) {
+        fail(skillFile, `name "${data.name}" must equal the skill directory "${directory}"`);
+      }
       if (!NAME_ALLOWLIST.has(directory) && !directory.startsWith(NAME_PREFIX)) {
         fail(skillFile, `skill directory must start with "${NAME_PREFIX}" or be allowlisted: ${directory}`);
-      }
-      if (data.name !== expectedName) {
-        fail(skillFile, `name "${data.name}" must equal "${expectedName}" for directory "${directory}"`);
       }
       if (!/^[a-z0-9-]+$/.test(data.name)) {
         fail(skillFile, "name may contain only lowercase letters, digits, and hyphens");
@@ -336,36 +369,59 @@ async function main() {
   }
 
   const skillNames = new Set(records.map((record) => record.name).filter(Boolean));
+
   for (const record of records) {
-    checkForbidden(record.skillFile, record.text);
-    checkLinks(record.dir, record.skillFile, record.text, record.text);
-    checkCommands(record.skillFile, record.text, skillNames);
-
-    const files = await collectMarkdown(record.dir);
-    const texts = [];
+    const files = await listMarkdown(record.dir);
+    const texts = new Map();
     for (const file of files) {
-      texts.push({ file, text: file === record.skillFile ? record.text : await readFile(file, "utf8") });
+      texts.set(file, (await readFile(file, "utf8")).replace(/^\uFEFF/, ""));
     }
-    checkOrphans(record.dir, record.skillFile, files, texts);
-  }
 
-  for (const warning of warnings) {
-    console.warn(`${warning.file}:${warning.line ?? "?"}: warning: ${warning.message}`);
+    const links = new Set();
+    for (const [file, text] of texts) {
+      checkForbidden(file, text);
+      checkReferences(file, text, skillNames);
+
+      for (const { target, line } of localLinkTargets(file, text)) {
+        const resolved = path.resolve(path.dirname(file), target);
+        if (!isInside(SKILLS_DIR, resolved)) {
+          fail(file, `link escapes the pack and breaks after install: ${target}`, line);
+          continue;
+        }
+        if (!existsSync(resolved)) {
+          fail(file, `link target does not exist: ${target}`, line);
+          continue;
+        }
+        if (path.extname(resolved) === ".md") {
+          links.add(resolved);
+        } else {
+          for (const nested of await listMarkdown(resolved)) links.add(nested);
+        }
+      }
+    }
+
+    checkOrphans(record.dir, record.skillFile, record.text, files, links);
   }
 
   if (json) {
-    console.log(JSON.stringify({ skills: [...skillNames].sort(), errors }, null, 2));
+    process.stdout.write(`${JSON.stringify({ skills: [...skillNames].sort(), errors }, null, 2)}\n`);
   } else {
     for (const error of errors) {
       console.error(`${error.file}:${error.line ?? "?"}: ${error.message}`);
     }
-    console.log(`${skillNames.size} skill(s) checked, ${errors.length} error(s), ${warnings.length} warning(s)`);
+    process.stdout.write(
+      `${skillNames.size} skill(s) checked, ${errors.length} error(s)\n`,
+    );
   }
 
-  if (errors.length > 0) process.exit(1);
+  // Set the code instead of calling process.exit(): exiting immediately can cut off
+  // pending stdout writes when the output is a pipe.
+  if (errors.length > 0) process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

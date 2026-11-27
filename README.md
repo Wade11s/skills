@@ -18,6 +18,9 @@ progress tracking) with Pi equivalents.
 
 Migration plan and change log: [`docs/planning/pstack-for-pi.md`](docs/planning/pstack-for-pi.md).
 
+Three names, one pack: the package is `wade11s-skills`, the plugin manifest is
+`pstack-for-pi`, and the skill directory is `skills/pstack-pi/`.
+
 ## Install
 
 Two channels, same files. Use one of them, not both.

@@ -2,7 +2,7 @@
 
 ## Upstream
 
-The skills under `skills/pstack-pi/` and the adapted guide under `docs/guide/` are
+The skills under `skills/pstack-pi/` (and the guide, once it is ported) are
 derived from **pstack**, part of [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack):
 
 - Copyright (c) 2026 Lauren Tan

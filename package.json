@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "wade11s-skills",
   "version": "0.1.0",
   "description": "Personal agent skills for Pi. First pack: pstack-for-pi.",
