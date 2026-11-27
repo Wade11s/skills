@@ -19,7 +19,7 @@ Every candidate gets the same prompt, so the prompt is the contract.
 
 ## Phase B: Fan out
 
-Spawn the runners, at most four at once, each with the task, the path to the shared grounding, its own output path, and instructions to produce the artifact and a short rationale naming the alternatives it considered and what it rejected. Wait with `rex_wait {handles, any: true}` and take each result as it lands. Close every runner with `rex_stop {handle, remove: true}` once its output is read.
+Spawn the runners, at most four at once, each with the task, the path to the shared grounding, its own output path, and instructions to produce the artifact and a short rationale naming the alternatives it considered and what it rejected. Wait with `rex_wait {handles, any: true}` and take each result as it lands. Close every runner with `rex_stop {handle, remove: true}` once its output is read and checked.
 
 If a candidate produces no output, proceed with N-1 and note the dropout.
 
