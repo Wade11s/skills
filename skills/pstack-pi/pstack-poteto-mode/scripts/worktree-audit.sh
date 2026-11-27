@@ -25,6 +25,7 @@ done
 repo="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
 [ -z "$repo" ] && { echo "not in a git repo; pass a repo path" >&2; exit 1; }
 cd "$repo" || exit 1
+repo=$(pwd -P)
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "error: not a git repo: $repo" >&2; exit 1; }
 
 # Main worktree is the first entry; everything else is a candidate.
@@ -70,9 +71,30 @@ fi
 [ -s "$prs" ] || echo "[]" > "$prs"
 
 # Pi stores sessions under ~/.pi/agent/sessions/--<cwd with / \ : as ->--.
-slug="--$(printf '%s' "$repo" | sed 's#^[/\\]##; s#[/\\:]#-#g')--"
-transcripts="${PI_CODING_AGENT_SESSION_DIR:-$HOME/.pi/agent/sessions}/$slug"
+sessions_root="${PI_CODING_AGENT_SESSION_DIR:-$HOME/.pi/agent/sessions}"
+slug_for() {
+	printf -- '--%s--' "$(printf '%s' "$1" | sed 's#^[/\\]##; s#[/\\:]#-#g')"
+}
+transcripts="$sessions_root/$(slug_for "$repo")"
 now=$(date +%s)
+
+# The newest session file under any of the given dirs that mentions the target.
+latest_session_hit() {
+	local target="$1" dir hits out=""
+	shift
+	for dir in "$@"; do
+		[ -d "$dir" ] || continue
+		if command -v rg >/dev/null 2>&1; then
+			hits=$(rg -l -F -e "${target}/" -e "${target}\"" "$dir" 2>/dev/null)
+		else
+			hits=$(grep -rlF -e "${target}/" -e "${target}\"" "$dir" 2>/dev/null)
+		fi
+		out="$out$hits
+"
+	done
+	printf '%s' "$out" | sed '/^$/d' \
+		| xargs stat "${stat_fmt[@]}" 2>/dev/null | sort -rn | head -1
+}
 
 echo "# base: $base"
 printf "SIZE\tAGE\tMERGED\tDIRTY\tREMOTE\tPR\tLAST_CHAT\tBUCKET\tWORKTREE\n"
@@ -108,20 +130,13 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt;
 		'.[] | select(.head==$b) | "#\(.number)/\(.state)"' "$prs" 2>/dev/null | head -1)
 	[ -z "$pr" ] && pr="-"
 
-	# Most recent Pi session whose transcript touched this worktree. Match path
-	# followed by "/" or a quote so glint-482 does not match glint-482-r37.
+	# Most recent Pi session whose transcript touched this worktree, whether the
+	# session started in the main repo or inside the worktree. Match path followed
+	# by "/" or a quote so glint-482 does not match glint-482-r37.
 	last="-"; last_ts=0
-	if [ -d "$transcripts" ]; then
-		if command -v rg >/dev/null 2>&1; then
-			hits=$(rg -l -F -e "${wt}/" -e "${wt}\"" "$transcripts" 2>/dev/null)
-		else
-			hits=$(grep -rlF -e "${wt}/" -e "${wt}\"" "$transcripts" 2>/dev/null)
-		fi
-		f=$(printf '%s\n' "$hits" | sed '/^$/d' \
-			| xargs stat "${stat_fmt[@]}" 2>/dev/null | sort -rn | head -1)
-		if [ -n "$f" ]; then last_ts=$(echo "$f" | awk '{print $1}')
-			last=$(fmt_day "$last_ts" 2>/dev/null); fi
-	fi
+	f=$(latest_session_hit "$wt" "$transcripts" "$sessions_root/$(slug_for "$wt")")
+	if [ -n "$f" ]; then last_ts=$(echo "$f" | awk '{print $1}')
+		last=$(fmt_day "$last_ts" 2>/dev/null); fi
 	recent=$([ "$last_ts" -gt 0 ] 2>/dev/null && [ $(( (now - last_ts) / 86400 )) -le 4 ] && echo yes || echo no)
 
 	case "$dirty" in wip:*) bucket=hold-wip ;; *)
