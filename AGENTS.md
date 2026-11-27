@@ -35,7 +35,9 @@ every declared skill to exist.
 
 - Skill directory: `pstack-<upstream-name>`.
 - Frontmatter `name` equals the directory name. `scripts/validate-skills.mjs` enforces it.
-- One exception: `setup-pstack` keeps its upstream name, directory and frontmatter.
+- Two exceptions: `setup-pstack` keeps its upstream name, directory and frontmatter; the
+  help skill is `pstack-help` (upstream `poteto-help`) because the shorter command is the
+  one users type.
 - Names are lowercase letters, digits, and hyphens, at most 64 characters. They never
   start or end with a hyphen and never contain two in a row.
 

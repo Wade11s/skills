@@ -176,8 +176,12 @@ function loadManifest() {
   }
   const names = new Set();
   for (const name of data.skills) {
-    if (typeof name !== "string" || !/^[a-z0-9-]+$/.test(name)) {
+    if (typeof name !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) || name.length > 64) {
       fail(MANIFEST, `invalid skill name in manifest: ${JSON.stringify(name)}`);
+      continue;
+    }
+    if (!name.startsWith(NAME_PREFIX) && !NAME_ALLOWLIST.has(name)) {
+      fail(MANIFEST, `manifest name must start with "${NAME_PREFIX}" or be allowlisted: ${name}`);
       continue;
     }
     if (names.has(name)) {
@@ -256,14 +260,15 @@ function lineOf(text, index) {
 }
 
 function pendingSkillLink(resolved, declared) {
-  const segments = resolved.split(path.sep);
-  for (let i = segments.length - 1; i >= 0; i -= 1) {
-    const segment = segments[i];
-    if (!declared.has(segment)) continue;
-    const dir = segments.slice(0, i + 1).join(path.sep) || path.sep;
-    if (!existsSync(dir)) return true;
-  }
-  return false;
+  // Only a direct skill path can be pending: skills/<pack>/<declared-name>/...
+  // Anything else that happens to contain a declared name is a broken link.
+  const relative = path.relative(SKILLS_DIR, resolved);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return false;
+  const segments = relative.split(path.sep);
+  if (segments.length < 2) return false;
+  const name = segments[1];
+  if (!declared.has(name)) return false;
+  return !existsSync(path.join(SKILLS_DIR, segments[0], name));
 }
 
 function isInside(parent, target) {

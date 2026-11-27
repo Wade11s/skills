@@ -194,7 +194,7 @@ pstack/
 
 ### 3.2 命名方案（已定：B + `setup-pstack` 例外）
 
-`skills/pstack-pi/pstack-<upstream>/`，frontmatter `name: pstack-<upstream>`；唯一例外是 `setup-pstack`，目录和 name 都保留原名。
+`skills/pstack-pi/pstack-<upstream>/`，frontmatter `name: pstack-<upstream>`；两个例外：`setup-pstack` 目录和 name 都保留原名；帮助技能命名为 `pstack-help`（上游 `poteto-help`），因为这是用户实际输入的命令。
 
 不变式（写进 validator）：`name === "pstack-" + basename(dir)`，白名单只放 `setup-pstack`。
 
