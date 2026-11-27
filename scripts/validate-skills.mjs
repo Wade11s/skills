@@ -318,6 +318,9 @@ function checkForbidden(file, text) {
       continue;
     }
     if (/<!--\s*pstack:mapping:end\s*-->/.test(line)) {
+      if (!inMapping) {
+        fail(file, "mapping block ends without a start", i + 1);
+      }
       inMapping = false;
       continue;
     }
@@ -328,6 +331,9 @@ function checkForbidden(file, text) {
         fail(file, `forbidden token (${label}): ${match[0]}`, i + 1);
       }
     }
+  }
+  if (inMapping) {
+    fail(file, "mapping block is not closed", lines.length);
   }
 }
 

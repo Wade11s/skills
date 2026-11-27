@@ -254,7 +254,9 @@ A reply checklist is not progress. Progress is a file and a script.
   ```
 
 - Commands: `init <slug> "<title>"`, `add <slug> "<text>"`, `done <slug> <id> [--note "<note>"]`,
-  `open <slug>`, `check <slug>`.
+  `open <slug>`, `check <slug>`, `unlock <slug>`.
+- A lock left by a killed process makes the next write fail with a named fix:
+  `todo.sh unlock <slug>`. Nothing steals a lock automatically.
 - A phase is not complete until `todo.sh done` exits 0. When the file and the reply
   disagree, the file wins.
 - A resume reads `todo.sh open` before doing anything else.

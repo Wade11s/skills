@@ -126,15 +126,30 @@ test("ids are literal digits", () => {
   assert.match(ok(cwd, ["open", "run"]), /^01\tfirst$/m);
 });
 
-test("a stale lock is taken over", () => {
+test("a stale lock blocks until it is unlocked", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
   ok(cwd, ["init", "run", "run"]);
   const lock = path.join(cwd, ".pstack/run/todo.md.lock");
   mkdirSync(lock);
   writeFileSync(path.join(lock, "pid"), "999999\n");
-  const result = run(cwd, ["add", "run", "after a killed holder"]);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "01");
+
+  const blocked = run(cwd, ["add", "run", "after a killed holder"], { PSTACK_LOCK_SPINS: "2" });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr, /stale lock/);
+
+  assert.equal(ok(cwd, ["unlock", "run"]), "unlocked");
+  assert.equal(ok(cwd, ["add", "run", "after a killed holder"]), "01");
+});
+
+test("unlock refuses a live lock", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  const lock = path.join(cwd, ".pstack/run/todo.md.lock");
+  mkdirSync(lock);
+  writeFileSync(path.join(lock, "pid"), `${process.pid}\n`);
+  const result = run(cwd, ["unlock", "run"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /live pid/);
 });
 
 test("check rejects duplicate ids", () => {
@@ -182,14 +197,17 @@ test("a lock held by a live process is not stolen", () => {
   writeFileSync(path.join(lock, "pid"), `${process.pid}\n`);
   const result = run(cwd, ["add", "run", "blocked"], { PSTACK_LOCK_SPINS: "5" });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /lock is held by a live process/);
+  assert.match(result.stderr, /live pid/);
 });
 
-test("a lock without a pid is stolen after the timeout", () => {
+test("a lock without a pid blocks until it is unlocked", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
   ok(cwd, ["init", "run", "run"]);
   const lock = path.join(cwd, ".pstack/run/todo.md.lock");
   mkdirSync(lock);
-  const result = run(cwd, ["add", "run", "after a crash"], { PSTACK_LOCK_SPINS: "2" });
-  assert.equal(result.status, 0, result.stderr);
+  const blocked = run(cwd, ["add", "run", "after a crash"], { PSTACK_LOCK_SPINS: "2" });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr, /stale lock/);
+  assert.equal(ok(cwd, ["unlock", "run"]), "unlocked");
+  assert.equal(ok(cwd, ["add", "run", "after a crash"]), "01");
 });

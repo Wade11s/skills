@@ -107,6 +107,7 @@ A run's plan is a file, not a checklist in the reply. Use this skill's [`scripts
 - Copy the playbook's steps in with `todo.sh add <slug> "<step>"`.
 - `todo.sh done <slug> <id>` when a step lands.
 - A step is not complete until `done` exits 0. When the file and the reply disagree, the file wins.
+- A write that reports a stale lock names the fix: `todo.sh unlock <slug>`. Nothing steals a lock automatically.
 
 State lives at `${PSTACK_STATE_DIR:-.pstack}/<slug>/`. The `decisions.tsv` in the same folder is the **show-me-your-work** log.
 

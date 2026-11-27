@@ -22,6 +22,7 @@ usage: todo.sh <command> <slug> [args]
   done <slug> <id> [--note "<n>"]  mark a step complete
   open <slug>                      print open steps as: id<TAB>text
   check <slug>                     validate the file format
+  unlock <slug>                    remove a stale lock after a crash
 
 State root: ${PSTACK_STATE_DIR:-.pstack}
 USAGE
@@ -65,11 +66,6 @@ id_check() {
 LOCKDIR=""
 LOCK_SPINS="${PSTACK_LOCK_SPINS:-200}"
 
-steal_lock() {
-  mv "$1" "$1.stale.$$" 2>/dev/null || return 1
-  rm -rf "$1.stale.$$"
-}
-
 release() {
   [ -n "$LOCKDIR" ] || return 0
   rm -rf "$LOCKDIR" 2>/dev/null || true
@@ -77,24 +73,21 @@ release() {
 }
 
 acquire() {
-  local lock="$1.lock" i=0 owner
+  local file="$1" slug="$2" lock="$1.lock" i=0 owner
   trap 'release' EXIT
   trap 'release; exit 143' TERM
   trap 'release; exit 130' INT
   while ! mkdir "$lock" 2>/dev/null; do
-    if [ -f "$lock/pid" ]; then
+    owner=""
+    if [ -s "$lock/pid" ]; then
       owner=$(cat "$lock/pid" 2>/dev/null || true)
-      if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
-        steal_lock "$lock" && continue
-      fi
     fi
     i=$((i + 1))
     if [ "$i" -gt "$LOCK_SPINS" ]; then
-      # No pid after a full timeout cannot be a live holder: it writes one immediately.
-      if [ ! -s "$lock/pid" ]; then
-        steal_lock "$lock" && continue
+      if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+        die "lock is held by live pid $owner; if it is gone, run: todo.sh unlock $slug"
       fi
-      die "lock is held by a live process: $lock"
+      die "stale lock at $lock; run: todo.sh unlock $slug"
     fi
     sleep 0.05
   done
@@ -156,7 +149,7 @@ cmd_add() {
   slug_check "$slug"
   file=$(file_of "$slug")
   [ -f "$file" ] || die "no todo file; run init first"
-  acquire "$file"
+  acquire "$file" "$slug"
   if has_step "$file" "$text"; then
     die "duplicate step: $text"
   fi
@@ -188,7 +181,7 @@ cmd_done() {
   done
   file=$(file_of "$slug")
   [ -f "$file" ] || die "no todo file; run init first"
-  acquire "$file"
+  acquire "$file" "$slug"
   if ! has_id "$file" "$id"; then
     if ID="$id" awk 'index($0, "- [x] " ENVIRON["ID"] " ") == 1 { done = 1 } END { exit done ? 0 : 1 }' "$file"; then
       printf 'already done: %s\n' "$id"
@@ -254,6 +247,26 @@ cmd_check() {
   printf 'ok\n'
 }
 
+cmd_unlock() {
+  local slug="${1:-}" file lock owner=""
+  [ -n "$slug" ] || die "slug is required"
+  slug_check "$slug"
+  file=$(file_of "$slug")
+  lock="$file.lock"
+  if [ ! -d "$lock" ]; then
+    printf 'no lock\n'
+    return 0
+  fi
+  if [ -s "$lock/pid" ]; then
+    owner=$(cat "$lock/pid" 2>/dev/null || true)
+  fi
+  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+    die "lock is held by live pid $owner; not removing"
+  fi
+  rm -rf "$lock"
+  printf 'unlocked\n'
+}
+
 command="${1:-}"
 shift || true
 case "$command" in
@@ -262,6 +275,7 @@ case "$command" in
   done) cmd_done "$@" ;;
   open) cmd_open "$@" ;;
   check) cmd_check "$@" ;;
+  unlock) cmd_unlock "$@" ;;
   "" | -h | --help) usage ;;
   *)
     usage >&2
