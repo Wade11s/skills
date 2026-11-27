@@ -307,6 +307,7 @@ function localLinkTargets(file, text) {
 function checkForbidden(file, text) {
   // The one place Cursor names may appear is the mapping block the harness owns.
   let inMapping = false;
+  let blocks = 0;
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
@@ -314,7 +315,11 @@ function checkForbidden(file, text) {
       if (file !== MAPPING_FILE) {
         fail(file, "mapping block is only allowed in references/harness.md", i + 1);
       }
+      if (inMapping) {
+        fail(file, "nested mapping block", i + 1);
+      }
       inMapping = true;
+      blocks += 1;
       continue;
     }
     if (/<!--\s*pstack:mapping:end\s*-->/.test(line)) {
@@ -334,6 +339,9 @@ function checkForbidden(file, text) {
   }
   if (inMapping) {
     fail(file, "mapping block is not closed", lines.length);
+  }
+  if (file === MAPPING_FILE && blocks !== 1) {
+    fail(file, `expected exactly one mapping block, found ${blocks}`);
   }
 }
 
