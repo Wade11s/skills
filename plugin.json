@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "pstack-for-pi",
+  "version": "0.1.0",
+  "description": "pstack, ported to Pi. Rigorous agent workflows you can parallelize with confidence.",
+  "author": {
+    "name": "Wade11s"
+  },
+  "homepage": "https://github.com/Wade11s/skills",
+  "repository": "https://github.com/Wade11s/skills",
+  "license": "MIT",
+  "keywords": [
+    "pstack",
+    "pi",
+    "poteto-mode",
+    "workflow",
+    "principles"
+  ]
+}

@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.log
+
+# pstack run state (todo files, decision logs)
+.pstack/
+.scratch/

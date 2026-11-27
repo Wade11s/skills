@@ -1,0 +1,25 @@
+{
+  "name": "wade11s-skills",
+  "version": "0.1.0",
+  "description": "Personal agent skills for Pi. First pack: pstack-for-pi.",
+  "keywords": [
+    "pi-package",
+    "agent-skills",
+    "skills",
+    "pstack"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Wade11s/skills",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wade11s/skills.git"
+  },
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "validate": "node scripts/validate-skills.mjs"
+  }
+}
