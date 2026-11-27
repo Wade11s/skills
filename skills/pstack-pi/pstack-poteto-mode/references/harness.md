@@ -5,9 +5,9 @@ needs; do not copy this file into a skill.
 
 If this file and a skill disagree, this file wins, and the skill is a bug.
 
-This file describes the target state of the pack. Two scripts it names land with later
-tickets: `scripts/models.mjs` with `setup-pstack`, and
-`pstack-poteto-mode/scripts/todo.sh` with the orchestrator.
+This file describes the target state of the pack. One script it names lands with a later
+ticket: `scripts/models.mjs` with `setup-pstack`. `pstack-poteto-mode/scripts/todo.sh`
+ships with the orchestrator.
 
 ## 1. Names and paths
 
@@ -56,8 +56,8 @@ tickets: `scripts/models.mjs` with `setup-pstack`, and
 2. **Delegate through a tier.** Use the first tier available in section 4, and say which
    one you used when it is not rex.
 3. **The kickoff starts with the operator rules.** The first line of every delegated brief
-   is `Read <absolute path>/pstack-poteto-mode/worker.md before anything else.` A delegate
-   that does not read it does not have the operator's rules.
+   is `Read <absolute path>/worker.md before anything else.`, with the absolute path of
+   this skill's folder. A delegate that does not read it does not have the operator's rules.
 4. **Models come from the role config.** Never invent a model id, never fall back to the
    parent model silently, and never exceed the configured thinking level. Section 5.
 5. **Read-only is a tool allowlist.** Say it with the tool list, not with adjectives.
@@ -94,7 +94,7 @@ Pick the first tier that exists in this session.
 (cd <cwd> && pi --mode json -p --no-session [--approve] \
    [--model <provider/model>] [--thinking <level>] [--tools read,grep,find] \
    [--append-system-prompt <absolute-persona-file>] \
-   "Read <abs>/pstack-poteto-mode/worker.md first. Task: <task>")
+   "Read <abs>/worker.md first. Task: <task>")
 ```
 
 - Pi has no `--cwd` flag. Set the process working directory so relative paths resolve in
@@ -118,7 +118,7 @@ separate directories; the parent judges them itself.
 
 Every brief stands alone. It contains:
 
-1. `Read <abs>/pstack-poteto-mode/worker.md before anything else.`
+1. `Read <abs>/worker.md before anything else.`, with the absolute path of the skill folder.
 2. The goal, in the user's terms, and the smallest change that meets it.
 3. Scope: paths, named symbols, and what is out of scope.
 4. How to verify, with the exact command when one exists.

@@ -93,6 +93,8 @@ You own every delegate's work. Review the diff and write your own summary. A sec
 
 The kickoff template is in [`references/brief.md`](references/brief.md). Use it; do not invent a second shape.
 
+**A routed skill owns its own delegation shape.** When `arena`, `swarm`, or `interrogate` names its runners, workers, or reviewers, follow that shape instead of substituting `poteto-agent` for every seat.
+
 ## Role models
 
 Read `~/.pi/agent/pstack-models.json`, or `.pi/pstack-models.json` when it exists. Resolve roles in the order the harness defines, and never invent a model id. The roles this skill uses are `feature, refactoring`, `bug-fix`, `perf-issue`, `hillclimb`, `judgment and prose`, and whatever panel roles a routed skill names. When a role is unassigned, follow the harness `on_unassigned` rule.

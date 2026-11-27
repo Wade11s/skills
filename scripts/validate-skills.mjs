@@ -25,6 +25,13 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
+const MAPPING_FILE = path.join(
+  SKILLS_DIR,
+  "pstack-pi",
+  "pstack-poteto-mode",
+  "references",
+  "harness.md",
+);
 const MANIFEST = path.join(ROOT, "scripts", "skill-manifest.json");
 const NAME_PREFIX = "pstack-";
 const NAME_ALLOWLIST = new Set(["setup-pstack"]);
@@ -304,6 +311,9 @@ function checkForbidden(file, text) {
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
     if (/<!--\s*pstack:mapping:start\s*-->/.test(line)) {
+      if (file !== MAPPING_FILE) {
+        fail(file, "mapping block is only allowed in references/harness.md", i + 1);
+      }
       inMapping = true;
       continue;
     }

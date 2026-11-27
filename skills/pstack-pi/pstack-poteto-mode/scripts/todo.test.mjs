@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -90,4 +90,77 @@ test("init refuses to overwrite without --force", () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /already exists/);
   ok(cwd, ["init", "run", "again", "--force"]);
+});
+
+test("a duplicate is detected after the file grows", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "long", "long run"]);
+  for (let i = 0; i < 120; i += 1) {
+    ok(cwd, ["add", "long", `step number ${i}`]);
+  }
+  const result = run(cwd, ["add", "long", "step number 1"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate step/);
+});
+
+test("newlines are rejected in text and notes", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  const added = run(cwd, ["add", "run", "line one\n- [x] 99 injected"]);
+  assert.notEqual(added.status, 0);
+  assert.match(added.stderr, /single line/);
+
+  ok(cwd, ["add", "run", "first"]);
+  const done = run(cwd, ["done", "run", "01", "--note", "bad\ninjected"]);
+  assert.notEqual(done.status, 0);
+  assert.match(done.stderr, /single line/);
+});
+
+test("ids are literal digits", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  ok(cwd, ["add", "run", "first"]);
+  const result = run(cwd, ["done", "run", ".*"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /id must be digits/);
+  assert.match(ok(cwd, ["open", "run"]), /^01\tfirst$/m);
+});
+
+test("a stale lock is taken over", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  const lock = path.join(cwd, ".pstack/run/todo.md.lock");
+  mkdirSync(lock);
+  writeFileSync(path.join(lock, "pid"), "999999\n");
+  const result = run(cwd, ["add", "run", "after a killed holder"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "01");
+});
+
+test("check rejects duplicate ids", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  const file = ok(cwd, ["init", "run", "run"]);
+  appendFileSync(file, "- [ ] 01 first\n- [x] 01 second (2026-01-01T00:00:00Z)\n");
+  const result = run(cwd, ["check", "run"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /duplicate id 01/);
+});
+
+test("a completed step cannot be added again", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  ok(cwd, ["init", "run", "run"]);
+  ok(cwd, ["add", "run", "write the repro"]);
+  ok(cwd, ["done", "run", "01"]);
+  const result = run(cwd, ["add", "run", "write the repro"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate step/);
+});
+
+test("step text is stored literally", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "pstack-todo-"));
+  const file = ok(cwd, ["init", "run", "run"]);
+  const text = "quote \" and ' and \\ and $(touch pwn) and * and [x]";
+  ok(cwd, ["add", "run", text]);
+  assert.ok(readFileSync(file, "utf8").includes(text));
+  assert.equal(existsSync(path.join(cwd, "pwn")), false);
 });

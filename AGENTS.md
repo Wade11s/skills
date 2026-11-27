@@ -81,6 +81,8 @@ The port targets Pi only. Cursor-only names must not survive:
 (`claude-*`, `gemini-*`, `grok-*`).
 
 Platform notes belong in `pstack-poteto-mode/references/harness.md`, not in skill bodies.
+The one place Cursor names may appear is a `<!-- pstack:mapping:start -->` block in that
+file; the validator rejects a mapping block anywhere else.
 
 ## Upstream
 

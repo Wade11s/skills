@@ -50,18 +50,54 @@ slug_check() {
   esac
 }
 
+one_line() {
+  case "$1" in
+    *$'\n'* | *$'\r'*) die "$2 must be a single line" ;;
+  esac
+}
+
+id_check() {
+  case "$1" in
+    "" | *[!0-9]*) die "id must be digits: $1" ;;
+  esac
+}
+
 LOCKDIR=""
+release() {
+  [ -n "$LOCKDIR" ] || return 0
+  rm -rf "$LOCKDIR" 2>/dev/null || true
+  LOCKDIR=""
+}
+
 acquire() {
-  local lock="$1.lock" i=0
+  local lock="$1.lock" i=0 owner
+  trap 'release' EXIT
+  trap 'release; exit 143' TERM
+  trap 'release; exit 130' INT
   while ! mkdir "$lock" 2>/dev/null; do
+    if [ -f "$lock/pid" ]; then
+      owner=$(cat "$lock/pid" 2>/dev/null || true)
+      if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
+        if mv "$lock" "$lock.stale.$$" 2>/dev/null; then
+          rm -rf "$lock.stale.$$"
+          continue
+        fi
+      fi
+    fi
     i=$((i + 1))
     if [ "$i" -gt 200 ]; then
+      # A holder died before writing its pid. Take the lock only once.
+      if mv "$lock" "$lock.stale.$$" 2>/dev/null; then
+        rm -rf "$lock.stale.$$"
+        mkdir "$lock" 2>/dev/null || die "lock timeout: $lock"
+        break
+      fi
       die "lock timeout: $lock"
     fi
     sleep 0.05
   done
+  printf '%s\n' "$$" >"$lock/pid"
   LOCKDIR="$lock"
-  trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
 }
 
 next_id() {
@@ -70,14 +106,39 @@ next_id() {
   printf '%02d' $((10#${max:-0} + 1))
 }
 
+has_step() {
+  # Compare against a literal step text, ignoring the trailing done marker.
+  STEP_TEXT="$2" awk '
+    BEGIN { target = ENVIRON["STEP_TEXT"] }
+    /^- \[[ x]\] [0-9][0-9]* / {
+      line = $0
+      sub(/^- \[[ x]\] [0-9][0-9]* /, "", line)
+      sub(/ \([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9:]+Z\).*$/, "", line)
+      if (line == target) found = 1
+    }
+    END { exit found ? 0 : 1 }
+  ' "$1"
+}
+
+has_id() {
+  ID="$2" awk '
+    BEGIN { id = ENVIRON["ID"] }
+    index($0, "- [ ] " id " ") == 1 { open = 1 }
+    index($0, "- [x] " id " ") == 1 { done = 1 }
+    END { exit (open && !done) ? 0 : 1 }
+  ' "$1"
+}
+
 cmd_init() {
-  local slug="${1:-}" title="${2:-}" force="${3:-}" dir file
+  local slug="${1:-}" title="${2:-}" force="${3:-}" dir
   [ -n "$slug" ] || die "slug is required"
   [ -n "$title" ] || die "title is required"
+  one_line "$title" "title"
   slug_check "$slug"
   dir=$(run_dir "$slug")
-  file=$(file_of "$slug")
   mkdir -p "$dir"
+  local file
+  file=$(file_of "$slug")
   if [ -f "$file" ] && [ "$force" != "--force" ]; then
     die "already exists: $file (use --force to reset)"
   fi
@@ -89,17 +150,17 @@ cmd_add() {
   local slug="${1:-}" text="${2:-}" file id
   [ -n "$slug" ] || die "slug is required"
   [ -n "$text" ] || die "text is required"
+  one_line "$text" "step text"
   slug_check "$slug"
   file=$(file_of "$slug")
   [ -f "$file" ] || die "no todo file; run init first"
   acquire "$file"
-  if sed -n 's/^- \[[ x]\] [0-9][0-9]* //p' "$file" | grep -Fxq -- "$text"; then
+  if has_step "$file" "$text"; then
     die "duplicate step: $text"
   fi
   id=$(next_id "$file")
   printf -- '- [ ] %s %s\n' "$id" "$text" >>"$file"
-  rmdir "$LOCKDIR" 2>/dev/null || true
-  LOCKDIR=""
+  release
   printf '%s\n' "$id"
 }
 
@@ -107,12 +168,14 @@ cmd_done() {
   local slug="${1:-}" id="${2:-}" note="" file ts
   [ -n "$slug" ] || die "slug is required"
   [ -n "$id" ] || die "id is required"
+  id_check "$id"
   slug_check "$slug"
   shift 2
   while [ $# -gt 0 ]; do
     case "$1" in
       --note)
         [ $# -ge 2 ] || die "--note needs a value"
+        one_line "$2" "note"
         note="$2"
         shift 2
         ;;
@@ -124,13 +187,16 @@ cmd_done() {
   file=$(file_of "$slug")
   [ -f "$file" ] || die "no todo file; run init first"
   acquire "$file"
-  if grep -qE "^- \[x\] $id " "$file"; then
-    printf 'already done: %s\n' "$id"
-    return 0
+  if ! has_id "$file" "$id"; then
+    if ID="$id" awk 'index($0, "- [x] " ENVIRON["ID"] " ") == 1 { done = 1 } END { exit done ? 0 : 1 }' "$file"; then
+      printf 'already done: %s\n' "$id"
+      return 0
+    fi
+    die "no open step $id"
   fi
-  grep -qE "^- \[ \] $id " "$file" || die "no open step $id"
   ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  awk -v id="$id" -v note="$note" -v ts="$ts" '
+  ID="$id" NOTE="$note" TS="$ts" awk '
+    BEGIN { id = ENVIRON["ID"]; note = ENVIRON["NOTE"]; ts = ENVIRON["TS"] }
     index($0, "- [ ] " id " ") == 1 {
       line = $0
       sub(/^- \[ \] /, "- [x] ", line)
@@ -160,13 +226,29 @@ cmd_check() {
   slug_check "$slug"
   file=$(file_of "$slug")
   [ -f "$file" ] || die "no todo file"
-  head -1 "$file" | grep -q '^# pstack todo: ' || die "bad header"
-  sed -n '2p' "$file" | grep -q '^<!-- pstack:todo v1 -->$' || die "bad marker"
-  awk 'NR > 2 && NF > 0 && $0 !~ /^- \[[ x]\] [0-9][0-9]+ .+$/ {
-         print "bad line " NR ": " $0
-         bad = 1
-       }
-       END { exit bad ? 1 : 0 }' "$file"
+  awk '
+    NR == 1 { if ($0 !~ /^# pstack todo: /) bad = 1 }
+    NR == 2 { if ($0 != "<!-- pstack:todo v1 -->") bad = 1 }
+    NR > 2 { exit }
+    END { if (NR < 2) bad = 1; exit bad ? 1 : 0 }
+  ' "$file" || die "bad header or marker"
+  awk '
+    NR > 2 && NF > 0 {
+      if ($0 !~ /^- \[[ x]\] [0-9][0-9]+ .+$/) {
+        print "bad line " NR ": " $0
+        bad = 1
+        next
+      }
+      line = $0
+      sub(/^- \[[ x]\] /, "", line)
+      split(line, parts, " ")
+      if (seen[parts[1]]++) {
+        print "duplicate id " parts[1] " on line " NR
+        bad = 1
+      }
+    }
+    END { exit bad ? 1 : 0 }
+  ' "$file"
   printf 'ok\n'
 }
 
