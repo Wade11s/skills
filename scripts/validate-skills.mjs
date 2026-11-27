@@ -379,6 +379,13 @@ function titleOf(basename) {
   return basename.replace(/\.md$/, "").replace(/-/g, " ");
 }
 
+function mentionsTitle(text, basename) {
+  const words = titleOf(basename);
+  const normalized = text.toLowerCase().replace(/[-_]+/g, " ");
+  const escaped = words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(normalized);
+}
+
 function mentionsWord(text, word) {
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(text);
@@ -396,9 +403,7 @@ function checkOrphans(skillDir, skillFile, skillText, files, links) {
     if (links.has(markdown)) continue;
 
     if (inPlaybooks) {
-      const title = titleOf(path.basename(markdown));
-      const kebab = path.basename(markdown, ".md");
-      if (mentionsWord(skillText, title) || mentionsWord(skillText, kebab)) continue;
+      if (mentionsTitle(skillText, path.basename(markdown))) continue;
     } else if (atRoot) {
       if (mentionsWord(skillText, path.basename(markdown))) continue;
     }
